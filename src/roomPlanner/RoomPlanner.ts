@@ -170,7 +170,7 @@ export class RoomPlanner {
 			return this.map[structureType];
 		}
 		if (this.memory.bunkerData && this.memory.bunkerData.anchor) {
-			return this.getBunkerStructurePlacement(structureType, this.memory.bunkerData.anchor);
+			return this.getBunkerStructurePlacement(structureType, this.memory.bunkerData.anchor, 8);
 		}
 		const roomMap = this.memory.mapsByLevel ? this.memory.mapsByLevel[8] : undefined;
 		if (roomMap && roomMap[structureType]) {
@@ -185,6 +185,7 @@ export class RoomPlanner {
 		if (this.placements.commandCenter) {
 			return this.placements.commandCenter;
 		}
+
 		const positions = this.plannedStructurePositions(STRUCTURE_STORAGE);
 		if (positions) {
 			return positions[0];
@@ -280,7 +281,7 @@ export class RoomPlanner {
 	/**
 	 * Generate a plan of component placements for a given RCL
 	 */
-	private generatePlan(level = 8): RoomPlan {
+	private generatePlan(level: number): RoomPlan {
 		const plan: RoomPlan = {};
 		for (const name in this.placements) {
 			const layout = this.getLayout(name);
@@ -305,7 +306,7 @@ export class RoomPlanner {
 	/**
 	 * Generate a map of (structure type: RoomPositions[]) for a given layout
 	 */
-	private parseLayout(structureLayout: StructureLayout, level = 8): StructureMap {
+	private parseLayout(structureLayout: StructureLayout, level: number): StructureMap {
 		const map = {} as StructureMap;
 		const layout = structureLayout[level];
 		if (layout) {
@@ -372,7 +373,7 @@ export class RoomPlanner {
 	/**
 	 * Get bunker building placements as a StructureMap
 	 */
-	getStructureMapForBunkerAt(anchor: { x: number, y: number }, level = 8): StructureMap {
+	getStructureMapForBunkerAt(anchor: { x: number, y: number }, level: number): StructureMap {
 		const dx = anchor.x - bunkerLayout.data.anchor.x;
 		const dy = anchor.y - bunkerLayout.data.anchor.y;
 		const structureLayout = _.mapValues(bunkerLayout[level]!.buildings, obj => obj.pos) as { [s: string]: Coord[] };
@@ -384,7 +385,7 @@ export class RoomPlanner {
 	 * Get the placement for a single type of structure for bunker layout
 	 */
 	getBunkerStructurePlacement(structureType: string, anchor: { x: number, y: number },
-								level = 8): RoomPosition[] {
+								level: number): RoomPosition[] {
 		const dx = anchor.x - bunkerLayout.data.anchor.x;
 		const dy = anchor.y - bunkerLayout.data.anchor.y;
 		return _.map(bunkerLayout[level]!.buildings[structureType].pos,
@@ -394,32 +395,25 @@ export class RoomPlanner {
 	/**
 	 * Generates a list of impassible obstacles from this.map or from this.memory.map
 	 */
-	getObstacles(): RoomPosition[] {
+	getObstacles(level: number): RoomPosition[] {
 		let obstacles: RoomPosition[] = [];
 		// Add sources and extractors to impassibles for tunnels
 		obstacles.concat(_.map(this.colony.sources, source => source.pos));
 		obstacles.concat(_.map(this.colony.extractors, extr => extr.pos));
 		const passableStructureTypes: string[] = [STRUCTURE_ROAD, STRUCTURE_CONTAINER, STRUCTURE_RAMPART];
-		if (_.keys(this.map).length > 0) { // if room planner has made the map, use that
-			for (const structureType in this.map) {
+		// do not use prebuilt map since the desired map could be a different level
+		if (this.memory.bunkerData && this.memory.bunkerData.anchor) {
+			const structureMap = this.getStructureMapForBunkerAt(this.memory.bunkerData.anchor, level);
+			for (const structureType in structureMap) {
 				if (!passableStructureTypes.includes(structureType)) {
-					obstacles = obstacles.concat(this.map[structureType]);
+					obstacles = obstacles.concat(structureMap[structureType]);
 				}
 			}
-		} else { // else, serialize from memory
-			if (this.memory.bunkerData && this.memory.bunkerData.anchor) {
-				const structureMap = this.getStructureMapForBunkerAt(this.memory.bunkerData.anchor);
-				for (const structureType in structureMap) {
-					if (!passableStructureTypes.includes(structureType)) {
-						obstacles = obstacles.concat(structureMap[structureType]);
-					}
-				}
-			} else if (this.memory.mapsByLevel) {
-				for (const structureType in this.memory.mapsByLevel[8]) {
-					if (!passableStructureTypes.includes(structureType)) {
-						obstacles = obstacles.concat(_.map(this.memory.mapsByLevel[8][structureType],
-														   protoPos => derefRoomPosition(protoPos)));
-					}
+		} else if (this.memory.mapsByLevel) {
+			for (const structureType in this.memory.mapsByLevel[level]) {
+				if (!passableStructureTypes.includes(structureType)) {
+					obstacles = obstacles.concat(_.map(this.memory.mapsByLevel[level][structureType],
+														protoPos => derefRoomPosition(protoPos)));
 				}
 			}
 		}
@@ -527,7 +521,7 @@ export class RoomPlanner {
 			return pos.lookFor(LOOK_MINERALS).length > 0;
 		} else {
 			if (_.isEmpty(this.map)) {
-				this.recallMap(level);
+				this.recallMap();
 			}
 			const positions = this.map[structureType];
 			if (positions && _.find(positions, p => p.isEqualTo(pos))) {
@@ -538,7 +532,7 @@ export class RoomPlanner {
 																this.colony.room.mineral!,
 																this.colony.controller], thing => thing.pos);
 				const maxRange = 4;
-				return pos.findInRange(thingsBuildingLinksAndContainers, 4).length > 0;
+				return pos.findInRange(thingsBuildingLinksAndContainers, maxRange).length > 0;
 			}
 		}
 		return false;

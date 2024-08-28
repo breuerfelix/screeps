@@ -80,7 +80,6 @@ export class MiningOverlord extends Overlord {
 				this.dismantlePositions = this.getDismantlePositions();
 				if (this.dismantlePositions.length > 0) {
 					this.memory.dismantleNeeded = true;
-					this.dismantlePositions = this.getDismantlePositions();
 				} else {
 					this.memory[DISMANTLE_CHECK] = getCacheExpiration(DISMANTLE_CHECK_FREQUENCY,
 																	  DISMANTLE_CHECK_FREQUENCY / 5);
@@ -615,11 +614,6 @@ export class MiningOverlord extends Overlord {
 					log.alert(`${miner.print} attempting to dismantle large structure!`);
 				}
 				return miner.goDismantle(dismantleTarget);
-			}
-			// Otherwise reclaculate dismantle positions and call again to get next target
-			else {
-				this.dismantlePositions = this.getDismantlePositions();
-				return this.dismantleActions(miner);
 			}
 		} else {
 			log.warning(`No reachable dismantle positions for ${miner.print}!`);

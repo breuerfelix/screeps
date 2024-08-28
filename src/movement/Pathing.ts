@@ -1191,7 +1191,7 @@ export class Pathing {
 			ensurePath : false,
 		});
 		if (startPos.roomName != endPos.roomName) {
-			log.error(`findBlockingPos() should only be used within a single room!`);
+			log.debug(`findBlockingPos() should only be used within a single room!`);
 			return undefined;
 		}
 		const matrix = new PathFinder.CostMatrix();

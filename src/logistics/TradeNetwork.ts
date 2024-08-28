@@ -5,7 +5,7 @@ import {Mem} from '../memory/Memory';
 import {profile} from '../profiler/decorator';
 import {Abathur} from '../resources/Abathur';
 import {alignedNewline, bullet, leftArrow, rightArrow} from '../utilities/stringConstants';
-import {maxBy, minBy, printRoomName} from '../utilities/utils';
+import {maxBy, minBy, printRoomName, onPublicServer} from '../utilities/utils';
 import {RESERVE_CREDITS} from '../~settings';
 
 interface MarketCache {
@@ -843,6 +843,8 @@ export class TraderJoe implements ITradeNetwork {
 	}
 
 	run(): void {
+		if (!onPublicServer()) return
+
 		if (Game.time % 10 == 0) {
 			this.cleanOrders();
 		}

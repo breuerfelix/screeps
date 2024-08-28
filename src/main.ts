@@ -109,36 +109,17 @@ function onGlobalReset(): void {
 	global.remoteDebugger = new RemoteDebugger();
 }
 
-
-// Global reset function if RL mode is enabled
-function onGlobalReset_RL(): void {
-	Mem.format();
-}
-
 // Decide which loop to export as the script loop
 let _loop: () => void;
-if (RL_TRAINING_MODE) {
-	// Use stripped version for training reinforcment learning model
-	_loop = main_RL;
+if (USE_SCREEPS_PROFILER) {
+	// Wrap the main loop in the profiler
+	_loop = () => profiler.wrap(main);
 } else {
-	if (USE_SCREEPS_PROFILER) {
-		// Wrap the main loop in the profiler
-		_loop = () => profiler.wrap(main);
-	} else {
-		// Use the default main loop
-		_loop = main;
-	}
+	// Use the default main loop
+	_loop = main;
 }
 
 export const loop = _loop;
 
-// Run the appropriate global reset function
-if (RL_TRAINING_MODE) {
-	OvermindConsole.printTrainingMessage();
-	onGlobalReset_RL();
-} else {
-	// Run the global reset code
-	onGlobalReset();
-}
-
-
+// Run the global reset code
+onGlobalReset();

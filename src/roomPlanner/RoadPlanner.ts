@@ -292,10 +292,10 @@ export class RoadPlanner {
 			roomPlannerRoads = this.roomPlanner.map[STRUCTURE_ROAD];
 		} else { // retrieve from memory
 			if (this.roomPlanner.memory.bunkerData && this.roomPlanner.memory.bunkerData.anchor) {
-				const layout = this.roomPlanner.getStructureMapForBunkerAt(this.roomPlanner.memory.bunkerData.anchor);
+				const layout = this.roomPlanner.getStructureMapForBunkerAt(this.roomPlanner.memory.bunkerData.anchor, this.colony.controller.level);
 				roomPlannerRoads = layout[STRUCTURE_ROAD];
 			} else if (this.roomPlanner.memory.mapsByLevel) {
-				roomPlannerRoads = _.map(this.roomPlanner.memory.mapsByLevel[8][STRUCTURE_ROAD],
+				roomPlannerRoads = _.map(this.roomPlanner.memory.mapsByLevel[this.colony.controller.level][STRUCTURE_ROAD],
 										 protoPos => derefRoomPosition(protoPos));
 			} else {
 				log.error(`RoadPlanner@${this.colony.room.print}: could not get road positions from room planner!`);
@@ -415,35 +415,36 @@ export class RoadPlanner {
 	}
 
 	run(): void {
-		/*
-		let roadPositions: RoomPosition[] = [];
-		for (const roomName in this.memory.roadCoordsPacked) {
-			roadPositions = roadPositions.concat(
-				unpackCoordListAsPosList(this.memory.roadCoordsPacked[roomName], roomName));
-		}
-		Visualizer.drawRoads(roadPositions)
-		*/
+
 		if (this.roomPlanner.active) {
 			if (this.roomPlanner.storagePos) {
-				this.buildRoadNetwork(this.roomPlanner.storagePos, this.roomPlanner.getObstacles());
+				this.buildRoadNetwork(this.roomPlanner.storagePos, this.roomPlanner.getObstacles(8));
 			}
 			this.visuals();
 		} else {
 			// Once in a blue moon, recalculate the entire network and write to memory to keep it up to date
 			if (Game.time % RoadPlanner.settings.recalculateRoadNetworkInterval == this.colony.id) {
 				if (this.roomPlanner.storagePos) {
-					this.cleanRoadCoverage();
-					this.recalculateRoadNetwork(this.roomPlanner.storagePos, this.roomPlanner.getObstacles());
+					//this.cleanRoadCoverage();
+					this.recalculateRoadNetwork(this.roomPlanner.storagePos, this.roomPlanner.getObstacles(8));
 				}
 			}
 			// Recompute coverage to destinations
 			if (Game.time % getAllColonies().length == this.colony.id && this.roomPlanner.storagePos) {
-				this.recomputeRoadCoverages(this.roomPlanner.storagePos);
+				//this.recomputeRoadCoverages(this.roomPlanner.storagePos);
 			}
 			// Build missing roads
 			if (this.colony.level >= RoadPlanner.settings.buildRoadsAtRCL && this.roomPlanner.shouldRecheck(3)) {
 				this.buildMissing();
 			}
+			
+			let roadPositions: RoomPosition[] = [];
+			for (const roomName in this.memory.roadCoordsPacked) {
+				roadPositions = roadPositions.concat(
+					unpackCoordListAsPosList(this.memory.roadCoordsPacked[roomName], roomName));
+			}
+			Visualizer.drawRoads(roadPositions)
+			
 		}
 	}
 
