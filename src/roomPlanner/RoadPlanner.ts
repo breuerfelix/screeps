@@ -415,6 +415,14 @@ export class RoadPlanner {
 	}
 
 	run(): void {
+		/*
+		let roadPositions: RoomPosition[] = [];
+		for (const roomName in this.memory.roadCoordsPacked) {
+			roadPositions = roadPositions.concat(
+				unpackCoordListAsPosList(this.memory.roadCoordsPacked[roomName], roomName));
+		}
+		Visualizer.drawRoads(roadPositions)
+		*/
 		if (this.roomPlanner.active) {
 			if (this.roomPlanner.storagePos) {
 				this.buildRoadNetwork(this.roomPlanner.storagePos, this.roomPlanner.getObstacles());

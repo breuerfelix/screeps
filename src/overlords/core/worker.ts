@@ -67,14 +67,17 @@ export class WorkerOverlord extends Overlord {
 			_.filter(this.colony.repairables, structure => {
 				if (structure.structureType == STRUCTURE_CONTAINER) {
 					// only repair containers in owned room
-					if (structure.pos.roomName == this.colony.name) {
-						return structure.hits < 0.5 * structure.hitsMax;
-					} else {
-						return false;
+					if (structure.pos.roomName != this.colony.name) {
+						return false
 					}
-				} else {
-					return structure.hits < structure.hitsMax;
+
+					return structure.hits < 0.5 * structure.hitsMax;
 				}
+
+				if (!this.colony.roomPlanner.structureShouldBeHere(structure.structureType, structure.pos))
+					return false
+
+				return structure.hits < structure.hitsMax;
 			}));
 		this.dismantleStructures = [];
 

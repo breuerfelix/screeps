@@ -87,7 +87,7 @@ export class Visualizer {
 			for (const pos of pointsByRoom[roomName]) {
 				vis.structure(pos.x, pos.y, STRUCTURE_ROAD);
 			}
-			vis.connectRoads({ color: "red" });
+			vis.connectRoads({ color: "red", opacity: 0.3, });
 		}
 	}
 
