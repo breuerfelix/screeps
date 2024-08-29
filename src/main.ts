@@ -57,7 +57,7 @@ function main(): void {
 	if (!Overmind || Overmind.shouldBuild || Game.time >= Overmind.expiration) {
 		PHASE = 'build';
 		delete global.Overmind;					// Explicitly delete the old Overmind object
-		Mem.garbageCollect(true);			// Run quick garbage collection
+		Mem.garbageCollect(true);				// Run quick garbage collection
 		global.Overmind = new _Overmind();		// Instantiate the Overmind object
 		Overmind.build();						// Build phase: instantiate all game components
 		LATEST_BUILD_TICK = Game.time;			// Record this tick as having a build reset

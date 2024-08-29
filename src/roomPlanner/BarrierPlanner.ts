@@ -177,24 +177,40 @@ export class BarrierPlanner {
 		}
 	}
 
+	private recomputeBarrierPositions(): void {
+		this.barrierPositions = [];
+		if (this.roomPlanner.bunkerPos) {
+			this.barrierPositions = this.computeBunkerBarrierPositions(
+				this.roomPlanner.bunkerPos,
+				this.colony.controller.pos,
+			);
+		} else if (this.roomPlanner.storagePos && this.roomPlanner.hatcheryPos) {
+			this.barrierPositions = this.computeBarrierPositions(
+				this.roomPlanner.hatcheryPos,
+				this.roomPlanner.storagePos,
+				this.colony.controller.pos,
+			);
+		}
+
+		this.memory.barrierCoordsPacked = packCoordList(this.barrierPositions);
+	}
+
 	run(): void {
 		if (this.roomPlanner.active) {
-			if (this.roomPlanner.bunkerPos) {
-				this.barrierPositions = this.computeBunkerBarrierPositions(this.roomPlanner.bunkerPos,
-																		   this.colony.controller.pos);
-			} else if (this.roomPlanner.storagePos && this.roomPlanner.hatcheryPos) {
-				this.barrierPositions = this.computeBarrierPositions(this.roomPlanner.hatcheryPos,
-																	 this.roomPlanner.storagePos,
-																	 this.colony.controller.pos);
-			}
+			this.recomputeBarrierPositions();
 			this.visuals();
-		} else {
-			if (!this.roomPlanner.memory.relocating && this.colony.level >= BarrierPlanner.settings.buildBarriersAtRCL
-				&& this.roomPlanner.shouldRecheck(2)) {
-				this.buildMissingRamparts();
-				if (this.colony.layout == 'bunker' && this.colony.level >= 7) {
-					this.buildMissingBunkerRamparts();
-				}
+			return;
+		}
+
+		if (this.roomPlanner.bunkerPos && this.roomPlanner.shouldRecheck(3)) {
+			this.recomputeBarrierPositions();
+		}
+
+		if (!this.roomPlanner.memory.relocating && this.colony.level >= BarrierPlanner.settings.buildBarriersAtRCL
+			&& this.roomPlanner.shouldRecheck(2)) {
+			this.buildMissingRamparts();
+			if (this.colony.layout == 'bunker' && this.colony.level >= 7) {
+				this.buildMissingBunkerRamparts();
 			}
 		}
 	}
