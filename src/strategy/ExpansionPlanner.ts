@@ -66,10 +66,6 @@ export class ExpansionPlanner implements IExpansionPlanner {
 		// let possibleIncubators: Colony[] = []; // TODO: support incubation
 		const possibleColonizers: Colony[] = [];
 		for (const colony of getAllColonies()) {
-			// if (colony.level >= DirectiveIncubate.requiredRCL
-			// 	&& _.filter(colony.flags, flag => DirectiveIncubate.filter(flag)).length == 0) {
-			// 	possibleIncubators.push(colony);
-			// }
 			if (colony.level >= DirectiveColonize.requiredRCL
 				&& _.filter(colony.flags, flag => DirectiveColonize.filter(flag)).length == 0) {
 				possibleColonizers.push(colony);
@@ -141,7 +137,8 @@ export class ExpansionPlanner implements IExpansionPlanner {
 
 	run(): void {
 		if (Game.time % CHECK_EXPANSION_FREQUENCY == 17 && getAutonomyLevel() == Autonomy.Automatic) {
-			this.handleExpansion();
+			// TODO: reenable if i am sure that i calculated all possible expansion places
+			//this.handleExpansion();
 		}
 	}
 

@@ -438,7 +438,7 @@ export class RoomIntel {
 		} else { // if the room is not uninhabitable
 			if (!room.memory[RMEM.EXPANSION_DATA] || Math.random() < SCORE_RECALC_PROB) {
 				// recompute some of the time
-				return ExpansionEvaluator.computeExpansionData(room);
+				return ExpansionEvaluator.computeExpansionData(room, true);
 			}
 		}
 		return false;
@@ -855,22 +855,18 @@ export class RoomIntel {
 	 * go in here is critical and inexpensive stuff that is necessary information for this tick.
 	 */
 	static init(): void {
-
 		for (const roomName in Game.rooms) {
 			Memory.rooms[roomName] = Memory.rooms[roomName] || {};
 		}
 
 		for (const roomName in Memory.rooms) {
-
 			const room: Room | undefined = Game.rooms[roomName];
 
 			this.recordSafety(roomName);
 			if (room) {
 				this.markVisible(room);
 			}
-
 		}
-
 	}
 
 

@@ -433,13 +433,14 @@ export class RoadPlanner {
 			this.buildMissing();
 		}
 		
+		/*
 		let roadPositions: RoomPosition[] = [];
 		for (const roomName in this.memory.roadCoordsPacked) {
 			roadPositions = roadPositions.concat(
 				unpackCoordListAsPosList(this.memory.roadCoordsPacked[roomName], roomName));
 		}
 		Visualizer.drawRoads(roadPositions)	
-		
+		*/
 	}
 
 	visuals(): void {

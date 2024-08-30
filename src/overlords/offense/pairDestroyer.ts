@@ -150,6 +150,7 @@ export class PairDestroyerOverlord extends Overlord {
 	}
 
 	run() {
+		// TODO: also attack creeps maybe? only when nothing is left
 		this.reassignIdleCreeps(Roles.healer);
 		this.reassignIdleCreeps(Roles.melee);
 		for (const attacker of this.attackers) {

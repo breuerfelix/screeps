@@ -596,6 +596,7 @@ export class Overseer implements IOverseer {
 				const report = overlord.creepUsageReport[role];
 				if (report == undefined) {
 					if (Game.time % 100 == 0) {
+						// TODO: is not reported when attacking controller
 						log.info(`Role ${role} is not reported by ${overlord.ref}!`);
 					}
 				} else {

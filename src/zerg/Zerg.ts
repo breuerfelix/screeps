@@ -186,7 +186,7 @@ export class Zerg extends AnyZerg {
 		return result;
 	}
 
-	attackController(controller: StructureController) {
+	attackController(controller: StructureController): CreepActionReturnCode {
 		const result = this.creep.attackController(controller);
 		if (!this.actionLog.attackController) this.actionLog.attackController = (result == OK);
 		return result;
