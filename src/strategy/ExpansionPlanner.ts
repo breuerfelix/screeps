@@ -20,13 +20,10 @@ const MAX_SCORE_BONUS = _.sum([UNOWNED_MINERAL_BONUS, CATALYST_BONUS]);
 
 const TOO_CLOSE_PENALTY = 100;
 
-interface ExpansionPlannerMemory {
-
-}
+interface ExpansionPlannerMemory {}
 
 const defaultExpansionPlannerMemory: () => ExpansionPlannerMemory = () => ({});
 
-@assimilationLocked
 @profile
 export class ExpansionPlanner implements IExpansionPlanner {
 
@@ -56,7 +53,8 @@ export class ExpansionPlanner implements IExpansionPlanner {
 		const roomName = this.chooseNextColonyRoom();
 		if (roomName) {
 			const pos = Pathing.findPathablePosition(roomName);
-			DirectiveColonize.createIfNotPresent(pos, 'room');
+			// TODO: reenable if i am sure that i calculated all possible expansion places
+			//DirectiveColonize.createIfNotPresent(pos, 'room');
 			log.notify(`Room ${roomName} selected as next colony! Creating colonization directive.`);
 		}
 	}
@@ -72,7 +70,7 @@ export class ExpansionPlanner implements IExpansionPlanner {
 			}
 		}
 		const possibleBestExpansions = _.compact(_.map(possibleColonizers, col => this.getBestExpansionRoomFor(col)));
-		log.debug(JSON.stringify(possibleBestExpansions));
+		log.debug(`possibleExspansions: ${JSON.stringify(possibleBestExpansions)}`);
 		const bestExpansion = maxBy(possibleBestExpansions, choice => choice!.score);
 		if (bestExpansion) {
 			log.alert(`Next expansion chosen: ${bestExpansion.roomName} with score ${bestExpansion.score}`);
@@ -137,8 +135,7 @@ export class ExpansionPlanner implements IExpansionPlanner {
 
 	run(): void {
 		if (Game.time % CHECK_EXPANSION_FREQUENCY == 17 && getAutonomyLevel() == Autonomy.Automatic) {
-			// TODO: reenable if i am sure that i calculated all possible expansion places
-			//this.handleExpansion();
+			this.handleExpansion();
 		}
 	}
 

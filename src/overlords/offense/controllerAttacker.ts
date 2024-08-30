@@ -86,8 +86,18 @@ export class ControllerAttackerOverlord extends Overlord {
 			}
 
 			const ret = controllerAttacker.attackController(this.room.controller);
+			// FIXME: type it
+			if (ret == -12) {
+				// creep got attacked on the way and is not able to claim
+				// produce new one
+				controllerAttacker.suicide()
+				continue
+			}
+
+			// FIXME: type it
 			if (ret != 0 && ret != -11) {
 				log.error(`Attacking Controller: ${this.room.controller.pos} Ret: ${ret}`)
+				continue
 			}
 		}
 	}

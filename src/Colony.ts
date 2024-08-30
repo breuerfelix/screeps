@@ -675,6 +675,7 @@ export class Colony {
 		this.linkNetwork.init();											// Initialize link network
 		this.roomPlanner.init();											// Initialize the room planner
 		if (Game.time % EXPANSION_EVALUATION_FREQ == 5 * this.id) {			// Re-evaluate expansion data if needed
+			log.debug(`refreshExpansionData: ${this.room.name}`)
 			ExpansionEvaluator.refreshExpansionData(this.memory.expansionData, this.room.name);
 		}
 	}

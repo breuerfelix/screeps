@@ -18,8 +18,6 @@ import {CombatIntel} from './CombatIntel';
 const RECACHE_TIME = 5000;
 const OWNED_RECACHE_TIME = 1000;
 const ROOM_CREEP_HISTORY_TICKS = 25;
-const SCORE_RECALC_PROB = 0.05;
-const FALSE_SCORE_RECALC_PROB = 0.01;
 
 
 export interface ExpansionData {
@@ -427,21 +425,6 @@ export class RoomIntel {
 				return smcooldown - (Game.time - tick);
 			}
 		}
-	}
-
-	private static recomputeScoreIfNecessary(room: Room): boolean {
-		if (room.memory[RMEM.EXPANSION_DATA] === 0) { // room is uninhabitable or owned
-			if (Math.random() < FALSE_SCORE_RECALC_PROB) {
-				// false scores get evaluated very occasionally
-				return ExpansionEvaluator.computeExpansionData(room);
-			}
-		} else { // if the room is not uninhabitable
-			if (!room.memory[RMEM.EXPANSION_DATA] || Math.random() < SCORE_RECALC_PROB) {
-				// recompute some of the time
-				return ExpansionEvaluator.computeExpansionData(room, true);
-			}
-		}
-		return false;
 	}
 
 	private static updateInvasionData(room: Room): void {
@@ -876,10 +859,7 @@ export class RoomIntel {
 	 */
 	static run(): void {
 
-		let alreadyComputedScore = false;
-
 		for (const roomName in Game.rooms) {
-
 			const room: Room = Game.rooms[roomName];
 
 			// Track invasion data, harvesting, and casualties for all colony rooms and outposts
@@ -898,9 +878,7 @@ export class RoomIntel {
 			// Record location of permanent objects in room and recompute score as needed
 			if (Game.time >= (room.memory[MEM.EXPIRATION] || 0)) {
 				this.recordPermanentObjects(room);
-				if (!alreadyComputedScore) {
-					alreadyComputedScore = this.recomputeScoreIfNecessary(room);
-				}
+				ExpansionEvaluator.computeExpansionData(room)
 				// Refresh cache
 				const recacheTime = room.owner ? OWNED_RECACHE_TIME : RECACHE_TIME;
 				room.memory[MEM.EXPIRATION] = getCacheExpiration(recacheTime, 250);
@@ -909,15 +887,12 @@ export class RoomIntel {
 			if (room.controller && Game.time % 5 == 0) {
 				this.recordControllerInfo(room.controller);
 			}
-
 		}
 
 		if (Game.time % 20 == 0) {
 			this.cleanMemory();
 		}
-
 	}
-
 }
 
 // For debugging purposes

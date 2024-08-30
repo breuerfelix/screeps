@@ -17,24 +17,24 @@ import set = Reflect.set;
 
 export const EXPANSION_EVALUATION_FREQ = 500;
 export const MIN_EXPANSION_DISTANCE = 2;
+export const EXPANSION_SEARCH_DEPTH = 6;
 
 export interface ColonyExpansionData {
 	possibleExpansions: { [roomName: string]: number | boolean };
 	expiration: number;
 }
 
-
 @profile
 export class ExpansionEvaluator {
-
 
 	static refreshExpansionData(expansionData: ColonyExpansionData, colonyRoomName: string): void {
 		// This method is typed a little strangely to avoid some circular dependency problems
 
 		// This only gets run once per colony
+		// expiration is always 0 so this runs every call
 		if (_.keys(expansionData.possibleExpansions).length == 0 || Game.time > expansionData.expiration) {
 			// Generate a list of rooms which can possibly be settled in
-			const nearbyRooms = Cartographer.recursiveRoomSearch(colonyRoomName, 5);
+			const nearbyRooms = Cartographer.recursiveRoomSearch(colonyRoomName, EXPANSION_SEARCH_DEPTH);
 			let possibleExpansions: string[] = [];
 			for (const depth in nearbyRooms) {
 				if (parseInt(depth, 10) <= MIN_EXPANSION_DISTANCE) continue;
@@ -46,17 +46,17 @@ export class ExpansionEvaluator {
 				}
 			}
 		}
+
 		// This gets run whenever function is called
 		for (const roomName in expansionData.possibleExpansions) {
-			if (expansionData.possibleExpansions[roomName] == true) {
-				if (Memory.rooms[roomName]) {
-					const roomExpansionData = RoomIntel.getExpansionData(roomName);
-					if (roomExpansionData == false) {
-						expansionData.possibleExpansions[roomName] = false;
-					} else if (roomExpansionData && roomExpansionData.score) {
-						expansionData.possibleExpansions[roomName] = roomExpansionData.score;
-					}
-				}
+			if (!expansionData.possibleExpansions[roomName]) continue
+			if (!Memory.rooms[roomName]) continue
+
+			const roomExpansionData = RoomIntel.getExpansionData(roomName);
+			if (roomExpansionData == false) {
+				expansionData.possibleExpansions[roomName] = false;
+			} else if (roomExpansionData && roomExpansionData.score) {
+				expansionData.possibleExpansions[roomName] = roomExpansionData.score;
 			}
 		}
 	}
@@ -178,7 +178,7 @@ export class ExpansionEvaluator {
 
 	// Compute the total score for a room
 	static computeExpansionData(room: Room, verbose = false): boolean {
-		if (verbose) log.info(`Computing score for ${room.print}...`);
+		log.debug(`Computing score for ${room.print}...`);
 		if (!room.controller) {
 			RoomIntel.setExpansionData(room.name, false);
 			return false;
@@ -259,7 +259,7 @@ export class ExpansionEvaluator {
 		}
 		totalScore = Math.floor(totalScore);
 
-		if (verbose) log.info(`Score: ${totalScore}`);
+		log.info(`Room: ${room.name} Expansionscore: ${totalScore}`);
 
 		const existingExpansionData = RoomIntel.getExpansionData(room.name);
 		if (existingExpansionData === false) {
