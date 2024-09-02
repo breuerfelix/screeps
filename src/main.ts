@@ -36,7 +36,7 @@ function main(): void {
 	Mem.clean();								// Clean memory contents
 
 	// Instantiation operations: build or refresh the game state -------------------------------------------------------
-	if (!Overmind || Overmind.shouldBuild || Game.time >= Overmind.expiration) {
+	if (!global.Overmind || Overmind.shouldBuild || Game.time >= Overmind.expiration) {
 		PHASE = 'build';
 		delete global.Overmind;					// Explicitly delete the old Overmind object
 		Mem.garbageCollect(true);				// Run quick garbage collection
@@ -73,9 +73,6 @@ function onGlobalReset(): void {
 	VersionMigration.run();
 	Memory.stats.persistent.lastGlobalReset = Game.time;
 	OvermindConsole.printUpdateMessage();
-	// Update the master ledger of valid checksums
-	// Make a new Overmind object
-	global.Overmind = new _Overmind();
 }
 
 // Decide which loop to export as the script loop

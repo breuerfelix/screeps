@@ -29,7 +29,7 @@ export class ExpansionPlanner implements IExpansionPlanner {
 	memory: ExpansionPlannerMemory;
 
 	constructor() {
-		this.memory = Mem.wrap(Memory, 'expansionPlanner', defaultExpansionPlannerMemory);
+		this.refresh()
 	}
 
 	refresh() {

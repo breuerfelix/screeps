@@ -1,6 +1,6 @@
 import { Zerg } from 'zerg/Zerg';
 import { GameCache } from './caching/GameCache';
-import { Colony, getAllColonies } from './Colony';
+import { Colony } from './Colony';
 import { log } from './console/log';
 import { DirectiveClearRoom } from './directives/colony/clearRoom';
 import { DirectivePoisonRoom } from './directives/colony/poisonRoom';
@@ -22,8 +22,8 @@ import { PowerZerg } from 'zerg/PowerZerg';
 import { Overlord } from 'overlords/Overlord';
 import { SpawnGroup } from 'logistics/SpawnGroup';
 
+// TODO: maybe move into constructor
 const profilerRooms: {[colonyName: string]: boolean} = {};
-
 if (USE_SCREEPS_PROFILER) {
     for (const name of PROFILER_INCLUDE_COLONIES) {
         profilerRooms[name] = true;
@@ -57,7 +57,6 @@ export default class _Overmind implements IOvermind {
 	exceptions: Error[];
 	roomIntel: RoomIntel;
 
-
     constructor() {
         this.memory = Memory.Overmind;
         this.overseer = new Overseer();
@@ -81,6 +80,31 @@ export default class _Overmind implements IOvermind {
         this.roomIntel = new RoomIntel();
         this.exceptions = [];
     }
+	
+    refresh() {
+        this.shouldBuild = true;
+        this.memory = Memory.Overmind;
+        this.exceptions = [];
+        this.cache.refresh();
+        this.overseer.refresh();
+        this.terminalNetwork.refresh();
+        this.tradeNetwork.refresh();
+        this.expansionPlanner.refresh();
+		_.forEach(this.colonies, c => c.refresh())
+		for (const directive in this.directives) {
+			this.directives[directive].refresh();
+		}
+
+		this.registerDirectives(true);
+
+        for (const o in this.overlords) {
+            this.overlords[o].refresh();
+        }
+        for (const s in this.spawnGroups) {
+            this.spawnGroups[s].refresh();
+        }
+        this.shouldBuild = false;
+    }
 
 	build() {
         log.debug('Rebuilding Overmind object!');
@@ -91,26 +115,58 @@ export default class _Overmind implements IOvermind {
         _.forEach(this.directives, d => d.spawnMoarOverlords());
         this.shouldBuild = false;
 	}
+	
+    init() {
+        this.try(() => RoomIntel.init());
+        this.try(() => this.tradeNetwork.init());
+        this.try(() => this.terminalNetwork.init());
+        this.try(() => this.overseer.init(), 'overseer.init()');
 
-    refresh() {
-        this.shouldBuild = true;
-        this.memory = Memory.Overmind;
-        this.exceptions = [];
-        this.cache.refresh();
-        this.overseer.refresh();
-        this.terminalNetwork.refresh();
-        this.tradeNetwork.refresh();
-        this.expansionPlanner.refresh();
-        this.refreshColonies();
-        this.refreshDirectives();
+        for (const colonyName in this.colonies) {
+            const usedCPU = Game.cpu.getUsed();
+            this.try(() => this.colonies[colonyName].init(), colonyName);
+            Stats.log('cpu.usage.' + colonyName + '.init', Game.cpu.getUsed() - usedCPU);
+        }
 
-        for (const o in this.overlords) {
-            this.overlords[o].refresh();
+        for (const spawnGroupName in this.spawnGroups) {
+            this.try(() => this.spawnGroups[spawnGroupName].init(), spawnGroupName);
         }
-        for (const s in this.spawnGroups) {
-            this.spawnGroups[s].refresh();
+
+        this.try(() => this.expansionPlanner.init());
+    }
+
+	run() {
+        for (const spawnGroupName in this.spawnGroups) {
+            this.try(() => this.spawnGroups[spawnGroupName].run(), spawnGroupName);
         }
-        this.shouldBuild = false;
+
+        this.try(() => this.overseer.run(), 'overseer.run()');
+
+        for (const colonyName in this.colonies) {
+            this.try(() => this.colonies[colonyName].run(), colonyName);
+        }
+
+        this.try(() => this.terminalNetwork.run());
+        this.try(() => this.tradeNetwork.run());
+        this.try(() => this.expansionPlanner.run());
+        this.try(() => RoomIntel.run());
+    }
+
+    postRun() {
+        this.handleExceptions();
+	}
+	
+	visuals() {
+        if (Game.cpu.bucket < 9000) {
+			Game.time % 10 == 0 && log.info('CPU bucket is too low (' + Game.cpu.bucket + ') - skip rendering visuals.');
+		}
+
+		Visualizer.visuals();
+
+		this.overseer.visuals();
+		for (const c in this.colonies) {
+			this.colonies[c].visuals();
+		}
     }
 
 	private try(callback: () => any, identifier?: string): void {
@@ -196,19 +252,13 @@ export default class _Overmind implements IOvermind {
         }
     }
 
-    refreshColonies() {
-        for (const colony in this.colonies) {
-			this.try(() => this.colonies[colony].refresh())
-        }
-    }
-
     registerDirectives(spawnOverlords: boolean = false) {
 		for (const flag in Game.flags) {
             if (this.directives[flag]) {
                 continue;
             }
 
-            const room = Game.flags[flag].memory.C;
+            const room = Game.flags[flag].memory[MEM.COLONY];
             if (room) {
                 if (USE_SCREEPS_PROFILER && !profilerRooms[room]) {
                     continue;
@@ -232,54 +282,6 @@ export default class _Overmind implements IOvermind {
         }
     }
 
-    refreshDirectives() {
-        for (const directive in this.directives) {
-            this.directives[directive].refresh();
-        }
-
-        this.registerDirectives(true);
-    }
-
-    init() {
-        this.try(() => RoomIntel.init());
-        this.try(() => this.tradeNetwork.init());
-        this.try(() => this.terminalNetwork.init());
-        this.try(() => this.overseer.init(), 'overseer.init()');
-
-        for (const colonyName in this.colonies) {
-            const usedCPU = Game.cpu.getUsed();
-            this.try(() => this.colonies[colonyName].init(), colonyName);
-            Stats.log('cpu.usage.' + colonyName + '.init', Game.cpu.getUsed() - usedCPU);
-        }
-
-        for (const spawnGroupName in this.spawnGroups) {
-            this.try(() => this.spawnGroups[spawnGroupName].init(), spawnGroupName);
-        }
-
-        this.try(() => this.expansionPlanner.init());
-    }
-
-    run() {
-        for (const spawnGroupName in this.spawnGroups) {
-            this.try(() => this.spawnGroups[spawnGroupName].run(), spawnGroupName);
-        }
-
-        this.try(() => this.overseer.run(), 'overseer.run()');
-
-        for (const colonyName in this.colonies) {
-            this.try(() => this.colonies[colonyName].run(), colonyName);
-        }
-
-        this.try(() => this.terminalNetwork.run());
-        this.try(() => this.tradeNetwork.run());
-        this.try(() => this.expansionPlanner.run());
-        this.try(() => RoomIntel.run());
-    }
-
-    postRun() {
-        this.handleExceptions();
-    }
-
     handleNotifications() {
         for (const colony of this.suspendedColonies) {
             this.overseer.notifier.alert('Colony suspended', colony, NotifierPriority.High);
@@ -289,17 +291,4 @@ export default class _Overmind implements IOvermind {
             this.overseer.notifier.alert('Colony suppressed', colony, NotifierPriority.Low);
         }
     }
-
-    visuals() {
-        if (Game.cpu.bucket < 9000) {
-			Game.time % 10 == 0 && log.info('CPU bucket is too low (' + Game.cpu.bucket + ') - skip rendering visuals.');
-		}
-
-		Visualizer.visuals();
-
-		this.overseer.visuals();
-		for (const c in this.colonies) {
-			this.colonies[c].visuals();
-		}
-    }
-};
+}

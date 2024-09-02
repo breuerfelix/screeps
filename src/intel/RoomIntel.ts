@@ -107,20 +107,6 @@ export class RoomIntel {
 		return Memory.roomIntel;
 	}
 
-	private static cleanMemory(): void {
-		// // Clean out memory of inactive portals // this actually gets done automatically with recordPermanentObjects
-		// for (const portalRoomName in this.memory.portalRooms) {
-		// 	const portals = this.memory.portalRooms[portalRoomName];
-		// 	if (portals) {
-		// 		for (const portal of portals) {
-		// 			if (portal[MEM.EXPIRATION]) {
-		// 				// TODO
-		// 			}
-		// 		}
-		// 	}
-		// }
-	}
-
 	/**
 	 * Mark a room as being visible this tick
 	 */
@@ -873,10 +859,6 @@ export class RoomIntel {
 			if (room.controller && Game.time % 5 == 0) {
 				this.recordControllerInfo(room.controller);
 			}
-		}
-
-		if (Game.time % 20 == 0) {
-			this.cleanMemory();
 		}
 	}
 }

@@ -71,13 +71,13 @@ export class Overseer implements IOverseer {
 	};
 
 	constructor() {
-		this.memory = Mem.wrap(Memory, 'overseer', getDefaultOverseerMemory);
 		this.directives = [];
 		this.overlords = [];
 		this.overlordsByColony = {};
 		this._overlordsCached = false;
 		this.notifier = new Notifier();
 		this.combatPlanner = new CombatPlanner();
+		this.refresh()
 	}
 
 	refresh() {

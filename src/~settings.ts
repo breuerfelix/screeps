@@ -72,7 +72,7 @@ export const RESERVE_CREDITS = onPublicServer() ? (Game.gcl.level >= 10 ? 1e6 : 
 /**
  * The global Overmind object will be re-instantiated after this many ticks. In the meantime, refresh() is used.
  */
-export const NEW_OVERMIND_INTERVAL = onPublicServer() ? 20 : 5;
+export const NEW_OVERMIND_INTERVAL = onPublicServer() ? 20 : 20;
 
 /**
  * Master scale for the RoomVisuals GUI // TODO: not plugged in yet
