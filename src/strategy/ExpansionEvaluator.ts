@@ -15,9 +15,9 @@ import {
 } from '../utilities/Cartographer';
 import set = Reflect.set;
 
-export const EXPANSION_EVALUATION_FREQ = 500;
+export const EXPANSION_EVALUATION_FREQ = 1000;
 export const MIN_EXPANSION_DISTANCE = 2;
-export const EXPANSION_SEARCH_DEPTH = 6;
+export const EXPANSION_SEARCH_DEPTH = 5;
 
 export interface ColonyExpansionData {
 	possibleExpansions: { [roomName: string]: number | boolean };
@@ -40,6 +40,12 @@ export class ExpansionEvaluator {
 				if (parseInt(depth, 10) <= MIN_EXPANSION_DISTANCE) continue;
 				possibleExpansions = possibleExpansions.concat(nearbyRooms[depth]);
 			}
+
+			// cleanup
+			for (const roomName in expansionData.possibleExpansions) {
+				expansionData.possibleExpansions[roomName] = false;
+			}
+
 			for (const roomName of possibleExpansions) {
 				if (Cartographer.roomType(roomName) == ROOMTYPE_CONTROLLER) {
 					expansionData.possibleExpansions[roomName] = true;

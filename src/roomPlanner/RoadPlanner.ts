@@ -45,8 +45,8 @@ export class RoadPlanner {
 
 	static settings = {
 		encourageRoadMerging          : true,
-		recalculateRoadNetworkInterval: onPublicServer() ? 1000 : 250, // recalculate road networks this often
-		recomputeCoverageInterval     : onPublicServer() ? 1000 : 500,	// recompute coverage to each destination this often
+		recalculateRoadNetworkInterval: onPublicServer() ? 1250 : 250, // recalculate road networks this often
+		recomputeCoverageInterval     : onPublicServer() ? 1500 : 500,	// recompute coverage to each destination this often
 		buildRoadsAtRCL               : 4,
 	};
 
@@ -421,12 +421,14 @@ export class RoadPlanner {
 
 		// Once in a blue moon, recalculate the entire network and write to memory to keep it up to date
 		if (Game.time % RoadPlanner.settings.recalculateRoadNetworkInterval == this.colony.id && this.roomPlanner.storagePos) {
+			log.debug("recalculate road network and coverage")
 			this.cleanRoadCoverage();
 			this.recalculateRoadNetwork(this.roomPlanner.storagePos, this.roomPlanner.getObstacles(8));
+			this.recomputeRoadCoverages(this.roomPlanner.storagePos);
 		}
 		// Recompute coverage to destinations
-		if (Game.time % getAllColonies().length == this.colony.id && this.roomPlanner.storagePos) {
-			this.recomputeRoadCoverages(this.roomPlanner.storagePos);
+		if (Game.time % RoadPlanner.settings.recomputeCoverageInterval == this.colony.id && this.roomPlanner.storagePos) {
+			// TODO maybe remove??
 		}
 		// Build missing roads
 		if (this.colony.level >= RoadPlanner.settings.buildRoadsAtRCL && this.roomPlanner.shouldRecheck(4)) {

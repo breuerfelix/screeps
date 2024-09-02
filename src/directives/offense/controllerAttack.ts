@@ -19,7 +19,7 @@ export class DirectiveControllerAttack extends Directive {
 	}
 
 	spawnMoarOverlords() {
-		this.overlords.scout = new StationaryScoutOverlord(this); // TODO: Not have a scout at all times
+		this.overlords.scout = new StationaryScoutOverlord(this);
 		this.overlords.controllerAttack = new ControllerAttackerOverlord(this);
 	}
 

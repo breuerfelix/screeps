@@ -21,13 +21,13 @@ export class DirectiveOutpost extends Directive {
 	};
 
 	spawnMoarOverlords() {
-		if (this.colony.level >= DirectiveOutpost.settings.canSpawnReserversAtRCL) {
-			if (Cartographer.roomType(this.pos.roomName) == ROOMTYPE_CONTROLLER) {
-				this.overlords.reserve = new ReservingOverlord(this);
-			}
-		} else {
-			this.overlords.scout = new StationaryScoutOverlord(this);
+		if (Cartographer.roomType(this.pos.roomName) == ROOMTYPE_CONTROLLER &&
+			this.colony.level >= DirectiveOutpost.settings.canSpawnReserversAtRCL) {
+			this.overlords.reserve = new ReservingOverlord(this);
+			return
 		}
+
+		this.overlords.scout = new StationaryScoutOverlord(this);
 	}
 
 	init(): void {

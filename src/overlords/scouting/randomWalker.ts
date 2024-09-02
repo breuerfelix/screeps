@@ -6,6 +6,7 @@ import {profile} from '../../profiler/decorator';
 import {Tasks} from '../../tasks/Tasks';
 import {Zerg} from '../../zerg/Zerg';
 import {Overlord} from '../Overlord';
+import {log} from '../../console/log';
 
 const DEFAULT_NUM_SCOUTS = 3;
 
@@ -27,17 +28,6 @@ export class RandomWalkerScoutOverlord extends Overlord {
 	}
 
 	private handleScout(scout: Zerg) {
-		/*
-		if (RoomIntel.getMyZoneStatus() == 'normal') {
-			// Check if room might be connected to newbie/respawn zone
-			const indestructibleWalls = _.filter(scout.room.walls, wall => wall.hits == undefined);
-			if (indestructibleWalls.length > 0) { // go back to origin colony if you find a room near newbie zone
-				scout.task = Tasks.goToRoom(this.colony.room.name); // todo: make this more precise
-				return
-			}
-		}
-		*/
-
 		// Pick a new room
 		const neighboringRooms = _.values(Game.map.describeExits(scout.pos.roomName)) as string[];
 		const roomName = _.sample(neighboringRooms);
@@ -48,6 +38,16 @@ export class RandomWalkerScoutOverlord extends Overlord {
 	}
 
 	run() {
+		for (const scout of this.scouts) {
+			// Check if room might be connected to newbie/respawn zone
+			const indestructibleWalls = _.filter(scout.room.walls, wall => wall.hits == undefined);
+			if (indestructibleWalls.length > 0) {
+				log.debug(`suiciding scout since newbie room discovered: ${this.room?.print}`)
+				scout.suicide() // just respawn since this is cheaper than going back to colony
+				continue
+			}
+		}
+
 		this.autoRun(this.scouts, scout => this.handleScout(scout));
 	}
 }

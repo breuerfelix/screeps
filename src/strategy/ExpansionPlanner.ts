@@ -53,8 +53,7 @@ export class ExpansionPlanner implements IExpansionPlanner {
 		const roomName = this.chooseNextColonyRoom();
 		if (roomName) {
 			const pos = Pathing.findPathablePosition(roomName);
-			// TODO: reenable if i am sure that i calculated all possible expansion places
-			//DirectiveColonize.createIfNotPresent(pos, 'room');
+			DirectiveColonize.createIfNotPresent(pos, 'room');
 			log.notify(`Room ${roomName} selected as next colony! Creating colonization directive.`);
 		}
 	}

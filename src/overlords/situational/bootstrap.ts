@@ -95,6 +95,7 @@ export class BootstrappingOverlord extends Overlord {
 				return;
 			}
 		}
+
 		// Spawn fillers
 		if (this.colony.getCreepsByRole(Roles.queen).length == 0 && this.colony.hatchery) { // no queen
 			const transporter = _.first(this.colony.getZergByRole(Roles.transport));
@@ -106,13 +107,9 @@ export class BootstrappingOverlord extends Overlord {
 				this.wishlist(1, Setups.filler);
 			}
 		}
+
 		// Then spawn the rest of the needed miners
 		this.spawnBootstrapMiners();
-		// const energyInStructures = _.sum(_.map(this.withdrawStructures, structure => structure.energy));
-		// const droppedEnergy = _.sum(this.room.droppedEnergy, drop => drop.amount);
-		// if (energyInStructures + droppedEnergy < BootstrappingOverlord.settings.spawnBootstrapMinerThreshold) {
-		// 	this.spawnBootstrapMiners();
-		// }
 	}
 
 	private supplyActions(filler: Zerg) {
@@ -142,11 +139,6 @@ export class BootstrappingOverlord extends Overlord {
 	}
 
 	run() {
-		for (const filler of this.fillers) {
-			if (filler.isIdle) {
-				this.handleFiller(filler);
-			}
-			filler.run();
-		}
+		this.autoRun(this.fillers, filler => this.handleFiller(filler))
 	}
 }
