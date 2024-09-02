@@ -1,4 +1,3 @@
-import {assimilationLocked} from '../assimilation/decorator';
 import {Colony} from '../Colony';
 import {log} from '../console/log';
 import {Mem} from '../memory/Memory';
@@ -283,7 +282,6 @@ interface ProvideOpts {
  * 	   less picky
  */
 @profile
-@assimilationLocked
 export class TerminalNetworkV2 implements ITerminalNetwork {
 
 	name: string; // for console.debug() purposes

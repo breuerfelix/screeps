@@ -1,4 +1,3 @@
-import {assimilationLocked} from './assimilation/decorator';
 import {$} from './caching/GlobalCache';
 import {log} from './console/log';
 import {Roles} from './creepSetups/setups';
@@ -113,7 +112,6 @@ export interface Assets {
  * creeps, utilities, etc. which are run from a single owned room.
  */
 @profile
-@assimilationLocked
 export class Colony {
 	// Colony memory
 	memory: ColonyMemory;								// Memory.colonies[name]

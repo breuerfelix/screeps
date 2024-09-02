@@ -1,4 +1,3 @@
-import {assimilationLocked} from '../assimilation/decorator';
 import {getAllColonies} from '../Colony';
 import {log} from '../console/log';
 import {Mem} from '../memory/Memory';
@@ -107,7 +106,6 @@ const defaultTradeOpts: TradeOpts = {
  * The trade network controls resource acquisition and disposal on the player market.
  */
 @profile
-@assimilationLocked
 export class TraderJoe implements ITradeNetwork {
 
 	static settings = {
