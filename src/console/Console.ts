@@ -8,7 +8,7 @@ import {EmpireAnalysis} from '../utilities/EmpireAnalysis';
 import {alignedNewline, bullet} from '../utilities/stringConstants';
 import {color, printRoomName, toColumns} from '../utilities/utils';
 import {asciiLogoRL, asciiLogoSmall} from '../visuals/logos';
-import {DEFAULT_OVERMIND_SIGNATURE, MY_USERNAME, USE_SCREEPS_PROFILER} from '../~settings';
+import {DEFAULT_OVERMIND_SIGNATURE, USE_SCREEPS_PROFILER} from '../~settings';
 import {log} from './log';
 
 type RecursiveObject = { [key: string]: number | RecursiveObject };

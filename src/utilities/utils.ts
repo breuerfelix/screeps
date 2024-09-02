@@ -111,10 +111,8 @@ export function getMyUsername(): string {
 	return 'ERROR: Could not determine username.';
 }
 
-const MUON = 'Muon';
-
 export function isAlly(username: string): boolean {
-	return username == MUON || (Memory.settings.allies || []).includes(username);
+	return (Memory.settings.allies || []).includes(username);
 }
 
 export function hasJustSpawned(): boolean {
@@ -127,19 +125,6 @@ export function onPublicServer(): boolean {
 
 export function onBotArena(): boolean {
 	return Game.shard.name.toLowerCase() == 'botarena';
-}
-
-export function onTrainingEnvironment(): boolean {
-	return !!Memory.reinforcementLearning && !!Memory.reinforcementLearning.enabled;
-}
-
-export function getReinforcementLearningTrainingVerbosity(): number {
-	if (Memory.reinforcementLearning) {
-		if (Memory.reinforcementLearning.verbosity != undefined) {
-			return Memory.reinforcementLearning.verbosity;
-		}
-	}
-	return 0;
 }
 
 interface ToColumnOpts {

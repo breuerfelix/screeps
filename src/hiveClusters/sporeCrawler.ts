@@ -99,28 +99,28 @@ export class SporeCrawler extends HiveCluster {
 	// }
 
 	private preventStructureDecay(includeRoads=true) {
-		if (this.towers.length > 0) {
-			// expensive to check all rampart hits; only run in intermediate RCL
-			const dyingRamparts = _.filter(this.room.ramparts, rampart =>
-				rampart.hits < WorkerOverlord.settings.barrierHits.critical
-				&& this.colony.roomPlanner.barrierPlanner.barrierShouldBeHere(rampart.pos));
-			if (dyingRamparts.length > 0) {
-				for (const tower of this.towers) {
-					tower.repair(tower.pos.findClosestByRange(dyingRamparts)!);
-				}
-				return;
+		if (this.towers.length < 1) return
+
+		// expensive to check all rampart hits; only run in intermediate RCL
+		const dyingRamparts = _.filter(this.room.ramparts, rampart =>
+			rampart.hits < WorkerOverlord.settings.barrierHits.critical
+			&& this.colony.roomPlanner.barrierPlanner.barrierShouldBeHere(rampart.pos));
+		if (dyingRamparts.length > 0) {
+			for (const tower of this.towers) {
+				tower.repair(tower.pos.findClosestByRange(dyingRamparts)!);
 			}
-			// repair roads
-			if (includeRoads) {
-				const decayingRoads = _.filter(this.room.roads, road => 
-					this.colony.roomPlanner.roadPlanner.roadShouldBeHere(road.pos) && road.hits < 0.2 * road.hitsMax,
-				);
-				if (decayingRoads.length > 0) {
-					const roadsToRepair = _.sample(decayingRoads, this.towers.length);
-					// ^ if |towers| > |roads| then this will have length of |roads|
-					for (const i in roadsToRepair) {
-						this.towers[i].repair(roadsToRepair[i]);
-					}
+			return;
+		}
+		// repair roads
+		if (includeRoads) {
+			const decayingRoads = _.filter(this.room.roads, road => 
+				road.hits < 0.2 * road.hitsMax && this.colony.roomPlanner.roadPlanner.roadShouldBeHere(road.pos),
+			);
+			if (decayingRoads.length > 0) {
+				const roadsToRepair = _.sample(decayingRoads, this.towers.length);
+				// ^ if |towers| > |roads| then this will have length of |roads|
+				for (const i in roadsToRepair) {
+					this.towers[i].repair(roadsToRepair[i]);
 				}
 			}
 		}

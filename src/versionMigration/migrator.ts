@@ -384,29 +384,25 @@ export class VersionMigration {
 
 		// Find oldest tick we can find
 		log.alert(`Fetching approximate empire age...`);
-		if (MY_USERNAME == 'Muon') {
-			Memory.tick = Game.time - 4461275; // oldest tick I could find
-		} else {
-			let oldestTick = Infinity;
-			for (const name in Memory.colonies) {
-				if (Memory.colonies[name] && Memory.colonies[name].roomPlanner) {
-					const rpmem =  Memory.colonies[name].roomPlanner;
-					if (rpmem.lastGenerated && rpmem.lastGenerated < oldestTick) {
-						oldestTick = rpmem.lastGenerated;
-					}
+		let oldestTick = Infinity;
+		for (const name in Memory.colonies) {
+			if (Memory.colonies[name] && Memory.colonies[name].roomPlanner) {
+				const rpmem =  Memory.colonies[name].roomPlanner;
+				if (rpmem.lastGenerated && rpmem.lastGenerated < oldestTick) {
+					oldestTick = rpmem.lastGenerated;
 				}
-			}
-			for (const name in Memory.flags) {
-				const fmem = Memory.flags[name];
-				if (fmem.T && fmem.T < oldestTick) {
-					oldestTick = fmem.T;
-				}
-			}
-			if (oldestTick < Infinity) {
-				Memory.tick = Game.time - oldestTick;
 			}
 		}
-
+		for (const name in Memory.flags) {
+			const fmem = Memory.flags[name];
+			if (fmem.T && fmem.T < oldestTick) {
+				oldestTick = fmem.T;
+			}
+		}
+		if (oldestTick < Infinity) {
+			Memory.tick = Game.time - oldestTick;
+		}
+		
 		// Clean some properties we don't use anymore
 		log.alert(`Cleaning memory...`);
 		delete Memory.strategist;
