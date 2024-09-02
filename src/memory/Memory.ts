@@ -174,7 +174,6 @@ export class Mem {
 			combatPlanner     : {},
 			profiler          : {},
 			overseer          : {},
-			segmenter         : {},
 			roomIntel         : {},
 			colonies          : {},
 			rooms             : {},

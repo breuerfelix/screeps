@@ -760,20 +760,6 @@ export class RoomIntel {
 		return rooms;
 	}
 
-	// static requestZoneData() {
-	// 	const checkOnTick = 123;
-	// 	if (Game.time % 1000 == checkOnTick - 2) {
-	// 		Segmenter.requestForeignSegment('LeagueOfAutomatedNations', 96);
-	// 	} else if (Game.time % 1000 == checkOnTick - 1) {
-	// 		const loanData = Segmenter.getForeignSegment();
-	// 		if (loanData) {
-	// 			Memory.zoneRooms = loanData;
-	// 		} else {
-	// 			log.error('Empty LOAN data');
-	// 		}
-	// 	}
-	// }
-
 	/**
 	 * Cached version of Game.map.getRoomStatus() which retrieves compressed status data and converts to RoomStatus
 	 */

@@ -10,7 +10,6 @@ import { RoomIntel } from './intel/RoomIntel';
 import { TerminalNetworkV2 } from './logistics/TerminalNetwork_v2';
 import { TraderJoe } from './logistics/TradeNetwork';
 import { Mem } from './memory/Memory';
-import { Segmenter } from './memory/Segmenter';
 import { Overseer } from './Overseer';
 import { profile } from './profiler/decorator';
 import { Stats } from './stats/stats';
@@ -278,7 +277,6 @@ export default class _Overmind implements IOvermind {
     }
 
     postRun() {
-        this.try(() => Segmenter.run());
         this.handleExceptions();
     }
 

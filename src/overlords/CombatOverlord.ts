@@ -39,24 +39,6 @@ export abstract class CombatOverlord extends Overlord {
 		return Game.time - this.memory[MEM.TICK];
 	}
 
-	// Standard sequence of actions for running combat creeps
-	autoRun(roleCreeps: CombatZerg[], creepHandler: (creep: CombatZerg) => void) {
-		for (const creep of roleCreeps) {
-			if (creep.spawning) {
-				return;
-			}
-			if (creep.hasValidTask) {
-				creep.run();
-			} else {
-				if (creep.needsBoosts) {
-					this.handleBoosting(creep);
-				} else {
-					creepHandler(creep);
-				}
-			}
-		}
-	}
-
 	/**
 	 * Contains logic for shutting down the overlord
 	 */

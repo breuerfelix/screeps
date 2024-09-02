@@ -26,7 +26,6 @@ import {Stats} from './stats/stats';
 import profiler from './profiler/screeps-profiler';
 import _Overmind from './Overmind';
 import {VersionMigration} from './versionMigration/migrator';
-import {RemoteDebugger} from './debug/remoteDebugger';
 // =====================================================================================================================
 
 // Main loop
@@ -61,7 +60,6 @@ function main(): void {
 
 	// Post-run code: handle sandbox code and error catching -----------------------------------------------------------
 	sandbox();									// Sandbox: run any testing code
-	//global.remoteDebugger.run();				// Run remote debugger code if enabled
 	Overmind.postRun();							// Throw errors at end of tick; anything after here might not get run
 }
 
@@ -78,8 +76,6 @@ function onGlobalReset(): void {
 	// Update the master ledger of valid checksums
 	// Make a new Overmind object
 	global.Overmind = new _Overmind();
-	// Make a remote debugger
-	global.remoteDebugger = new RemoteDebugger();
 }
 
 // Decide which loop to export as the script loop
