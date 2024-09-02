@@ -14,7 +14,7 @@ export const MY_USERNAME: string = getMyUsername();
 /**
  * Enable this to build from source including screeps-profiler. (This is separate from Overmind-Profiler.)
  */
-export const USE_SCREEPS_PROFILER: boolean = false;
+export const USE_SCREEPS_PROFILER: boolean = true;
 
 /**
  * Profiling is incredibly expensive and can cause the script to time out. By setting this option, you can limit the

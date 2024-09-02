@@ -45,7 +45,6 @@ export class OvermindConsole {
 		global.removeUnbuiltConstructionSites = this.removeUnbuiltConstructionSites;
 		global.listDirectives = this.listDirectives;
 		global.listPersistentDirectives = this.listPersistentDirectives;
-		// global.directiveInfo = this.directiveInfo;
 		global.removeAllLogisticsDirectives = this.removeAllLogisticsDirectives;
 		global.removeFlagsByColor = this.removeFlagsByColor;
 		global.removeErrantFlags = this.removeErrantFlags;

@@ -57,14 +57,6 @@ export class Notifier {
 		log.alert(printRoomName(roomName) + ': ' + message);
 	}
 
-	// init() {
-	//
-	// }
-	//
-	// run() {
-	//
-	// }
-
 	generateNotificationsList(links = false): string[] {
 		const sortedAlerts = _.sortBy(this.alerts, alert => alert.priority);
 		return _.map(sortedAlerts, alert => {
