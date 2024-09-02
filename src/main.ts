@@ -2,7 +2,7 @@
 /* tslint:disable:ordered-imports */
 
 'use strict';
-global.PHASE = 'assimilating';
+global.PHASE = 'build';
 global.LATEST_BUILD_TICK = Game.time;
 // Import ALL the things! ==============================================================================================
 import './console/globals'; // Global functions accessible from CLI
@@ -24,7 +24,7 @@ import {Mem} from './memory/Memory';
 import {OvermindConsole} from './console/Console';
 import {Stats} from './stats/stats';
 import profiler from './profiler/screeps-profiler';
-import _Overmind from './Overmind'; // this should be './Overmind_obfuscated' unless you are me
+import _Overmind from './Overmind';
 import {VersionMigration} from './versionMigration/migrator';
 import {RemoteDebugger} from './debug/remoteDebugger';
 // =====================================================================================================================
@@ -60,7 +60,7 @@ function main(): void {
 	Memory.tick++;								// Record successful tick
 
 	// Post-run code: handle sandbox code and error catching -----------------------------------------------------------
-	//sandbox();									// Sandbox: run any testing code
+	sandbox();									// Sandbox: run any testing code
 	//global.remoteDebugger.run();				// Run remote debugger code if enabled
 	Overmind.postRun();							// Throw errors at end of tick; anything after here might not get run
 }

@@ -8,7 +8,7 @@ declare const NO_ACTION: 1;
 declare type NO_ACTION = NO_ACTION;
 global.NO_ACTION = NO_ACTION;
 
-type TickPhase = 'assimilating' | 'build' | 'refresh' | 'init' | 'run' | 'postRun';
+type TickPhase = 'build' | 'refresh' | 'init' | 'run' | 'postRun';
 declare var PHASE: TickPhase;
 declare var LATEST_BUILD_TICK: number;
 declare var LATEST_GLOBAL_RESET_TICK: number;
