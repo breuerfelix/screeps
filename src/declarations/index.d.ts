@@ -25,8 +25,6 @@ declare namespace NodeJS {
 
 		Overmind: IOvermind;
 
-		Assimilator: IAssimilator;
-
 		print(...args: any[]): string;
 
 		deref(ref: string): RoomObject | null;
@@ -92,24 +90,6 @@ interface IExpansionPlanner {
 // 	terminalNetwork: any;
 // 	versionUpdater: any;
 // }
-
-declare const Assimilator: IAssimilator;
-
-interface IAssimilator {
-
-	validate(code: any): void;
-
-	generateChecksum(): string;
-
-	updateValidChecksumLedger(): void;
-
-	isAssimilated(username: string): boolean;
-
-	getClearanceCode(username: string): string | null;
-
-	run(): void;
-
-}
 
 interface IOvermind {
 	shouldBuild: boolean;

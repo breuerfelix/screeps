@@ -34,7 +34,6 @@
     "out": "../overmind-docs/docs",
     "ignoreCompilerErrors": true,
     "excludeNotExported": true,
-    "exclude": "**/*+(Assimilator|Overmind).ts",
     "readme": "none"
   }
 }

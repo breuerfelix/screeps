@@ -23,17 +23,6 @@ export class DefenseNPCOverlord extends Overlord {
 		this.guards = this.combatZerg(Roles.guardMelee);
 	}
 
-	// private reassignIdleGuards(): void {
-	// 	// Find all idle guards
-	// 	let idleGuards = _.filter(this.colony.getCreepsByRole('guard'), (guard: Zerg) => !guard.overlord);
-	// 	// Reassign them all to this flag
-	// 	for (let guard of idleGuards) {
-	// 		guard.overlord = this;
-	// 	}
-	// 	// Refresh the list of guards
-	// 	this.guards = this.creeps('guard');
-	// }
-
 	private findAttackTarget(guard: CombatZerg): Creep | Structure | undefined | null {
 		const targetingDirectives = DirectiveTargetSiege.find(guard.room.flags) as DirectiveTargetSiege[];
 		const targetedStructures = _.compact(_.map(targetingDirectives,
@@ -67,36 +56,25 @@ export class DefenseNPCOverlord extends Overlord {
 		if (!guard.inSameRoomAs(this) || guard.pos.isEdge) {
 			// Move into the assigned room if there is a guard flag present
 			console.log("goto room")
+			console.log(this.pos.roomName)
 			guard.goToRoom(this.pos.roomName);
 		} else { // If you're in the assigned room or if there is no assignment, try to attack or heal
 			const attackTarget = this.findAttackTarget(guard);
 			console.log("attack target")
 			if (attackTarget) {
-				console.log("combat actions")
 				this.combatActions(guard, attackTarget);
 			} else {
-				console.log("medic actions")
 				guard.doMedicActions(this.pos.roomName);
 			}
 		}
 	}
 
 	init() {
-		const amount = this.room && (this.room.invaders.length > 0 || RoomIntel.isInvasionLikely(this.room)) ? 1 : 0;
-		console.log(amount)
-		this.wishlist(amount, CombatSetups.broodlings.default, {reassignIdle: true});
+		// always wishlist one guard since if the attack killed every creep i have no vision of the room
+		this.wishlist(1, CombatSetups.broodlings.default, {reassignIdle: true});
 	}
 
 	run() {
-		for (const guard of this.guards) {
-			// Run the creep if it has a task given to it by something else; otherwise, proceed with non-task actions
-			if (guard.hasValidTask) {
-				console.log("run gard")
-				guard.run();
-			} else {
-				console.log("handle guard")
-				this.handleGuard(guard);
-			}
-		}
+		this.autoRun(this.guards, guard => this.handleGuard(guard))
 	}
 }

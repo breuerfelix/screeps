@@ -16,7 +16,6 @@ interface RawMemory {
 interface Memory {
 	tick: number;
 	build: number;
-	assimilator: any;
 	Overmind: {};
 	profiler: any;
 	overseer: any;
