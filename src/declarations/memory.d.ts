@@ -16,11 +16,9 @@ interface RawMemory {
 interface Memory {
 	tick: number;
 	build: number;
-	assimilator: any;
 	Overmind: {};
 	profiler: any;
 	overseer: any;
-	segmenter: any;
 	roomIntel: any;
 	colonies: { [name: string]: any };
 	creeps: { [name: string]: CreepMemory; };

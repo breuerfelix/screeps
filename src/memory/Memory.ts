@@ -114,14 +114,16 @@ export class Mem {
 	}
 
 	static garbageCollect(quick?: boolean) {
-		if (global.gc) { // sometimes garbage collection isn't available
-			const start = Game.cpu.getUsed();
-			global.gc(quick);
-			log.debug(`Running ${quick ? 'quick' : 'FULL'} garbage collection. ` +
-					  `Elapsed time: ${Game.cpu.getUsed() - start}.`);
-		} else {
+		if (!global.gc) {
+			// sometimes garbage collection isn't available
 			log.debug(`Manual garbage collection is unavailable on this server.`);
+			return
 		}
+
+		const start = Game.cpu.getUsed();
+		global.gc(quick);
+		log.debug(`Running ${quick ? 'quick' : 'FULL'} garbage collection. ` +
+					`Elapsed time: ${Game.cpu.getUsed() - start}.`);
 	}
 
 	/**
@@ -168,12 +170,10 @@ export class Mem {
 		return {
 			tick              : Game.time,
 			build             : 0,
-			assimilator       : {},
 			Overmind          : {},
 			combatPlanner     : {},
 			profiler          : {},
 			overseer          : {},
-			segmenter         : {},
 			roomIntel         : {},
 			colonies          : {},
 			rooms             : {},

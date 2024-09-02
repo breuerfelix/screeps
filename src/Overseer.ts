@@ -32,7 +32,7 @@ import {
 } from './utilities/Cartographer';
 import {p} from './utilities/random';
 import {canClaimAnotherRoom, getAllRooms, hasJustSpawned, minBy, onPublicServer} from './utilities/utils';
-import {MUON, MY_USERNAME, USE_TRY_CATCH} from './~settings';
+import {USE_TRY_CATCH} from './~settings';
 
 
 // export const DIRECTIVE_CHECK_FREQUENCY = 2;
@@ -374,7 +374,7 @@ export class Overseer implements IOverseer {
 			if (isBlocked) {
 				// Game.notify("Room " + roomName + " is blocked, not expanding there.");
 			}
-			const disregardReservations = !onPublicServer() || MY_USERNAME == MUON;
+			const disregardReservations = !onPublicServer();
 			if (alreadyOwned || (alreadyReserved && !disregardReservations) || isBlocked) {
 				return false;
 			}

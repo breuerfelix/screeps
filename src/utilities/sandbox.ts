@@ -3,8 +3,6 @@
 import {log} from '../console/log';
 import {PackratTests} from './packrat';
 
-// import {tftest} from './reinforcementLearning/test'
-
 export function sandbox() {
 	try {
 		global.PackratTests = PackratTests;

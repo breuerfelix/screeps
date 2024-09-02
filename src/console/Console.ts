@@ -50,8 +50,6 @@ export class OvermindConsole {
 		global.removeFlagsByColor = this.removeFlagsByColor;
 		global.removeErrantFlags = this.removeErrantFlags;
 		global.deepCleanMemory = this.deepCleanMemory;
-		global.startRemoteDebugSession = this.startRemoteDebugSession;
-		global.endRemoteDebugSession = this.endRemoteDebugSession;
 		global.profileMemory = this.profileMemory;
 		global.cancelMarketOrders = this.cancelMarketOrders;
 		global.setRoomUpgradeRate = this.setRoomUpgradeRate;
@@ -102,7 +100,6 @@ export class OvermindConsole {
 		descr['removeErrantFlags()'] = 'remove all flags which don\'t match a directive';
 		descr['deepCleanMemory()'] = 'deletes all non-critical portions of memory (be careful!)';
 		descr['profileMemory(root=Memory, depth=1)'] = 'scan through memory to get the size of various objects';
-		descr['startRemoteDebugSession()'] = 'enables the remote debugger so Muon can debug your code';
 		descr['cancelMarketOrders(filter?)'] = 'cancels all market orders matching filter (if provided)';
 		descr['setRoomUpgradeRate(room, upgradeRate)'] = 'changes the rate which a room upgrades at, default is 1';
 		descr['getEmpireMineralDistribution()'] = 'returns current census of colonies and mined sk room minerals';
@@ -134,12 +131,8 @@ export class OvermindConsole {
 
 	static info(aligned = false): string {
 		const b = bullet;
-		const checksum = Assimilator.generateChecksum();
-		const clearanceCode = Assimilator.getClearanceCode(MY_USERNAME);
 		const baseInfo = [
 			`${b}Version:        Overmind v${__VERSION__}`,
-			`${b}Checksum:       ${checksum}`,
-			`${b}Assimilated:    ${clearanceCode ? 'Yes' : 'No'} (clearance code: ${clearanceCode}) [WIP]`,
 			`${b}Operating mode: ${Memory.settings.operationMode}`,
 		];
 		const joinChar = aligned ? alignedNewline : '\n';
@@ -195,16 +188,6 @@ export class OvermindConsole {
 	static stopDebug(thing: { name?: string, ref?: string, memory: any }): string {
 		delete thing.memory.debug;
 		return `Disabled debugging for ${thing.name || thing.ref || '(no name or ref)'}.`;
-	}
-
-	static startRemoteDebugSession(): string {
-		global.remoteDebugger.enable();
-		return `Started remote debug session.`;
-	}
-
-	static endRemoteDebugSession(): string {
-		global.remoteDebugger.disable();
-		return `Ended remote debug session.`;
 	}
 
 	static print(...args: any[]): string {

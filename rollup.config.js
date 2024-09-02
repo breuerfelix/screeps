@@ -30,7 +30,7 @@ export default {
         resolve(),
         commonjs({
                      namedExports: {
-                         'src/Overmind_obfuscated': ['_Overmind'],
+                         'src/Overmind': ['_Overmind'],
                          'screeps-profiler': ['profiler'],
                          'columnify': ['columnify']
                      }

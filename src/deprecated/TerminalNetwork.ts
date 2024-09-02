@@ -1,4 +1,3 @@
-import {assimilationLocked} from '../assimilation/decorator';
 import {$} from '../caching/GlobalCache';
 import {Colony, getAllColonies} from '../Colony';
 import {log} from '../console/log';
@@ -63,7 +62,6 @@ interface TerminalState {
  * NOTE: THIS VERSION OF THE TERMINAL NETWORK IS NOW DEPRECATED
  */
 @profile
-@assimilationLocked
 export class TerminalNetwork /*implements ITerminalNetwork*/ {
 	allTerminals: StructureTerminal[];				// All terminals
 	terminals: StructureTerminal[];					// Terminals in standard state
