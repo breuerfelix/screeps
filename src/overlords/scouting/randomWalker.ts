@@ -24,6 +24,12 @@ export class RandomWalkerScoutOverlord extends Overlord {
 	}
 
 	init() {
+		if (this.room && this.hasIndestrucibleWalls(this.room)) {
+			// do not spawn random scouts if we have walls in our room
+			// FIXME: just navigate to another room
+			return
+		}
+
 		this.wishlist(DEFAULT_NUM_SCOUTS, Setups.scout);
 	}
 
@@ -37,13 +43,17 @@ export class RandomWalkerScoutOverlord extends Overlord {
 		}
 	}
 
+	hasIndestrucibleWalls(room: Room): boolean {
+		const indestructibleWalls = _.filter(room.walls, wall => wall.hits == undefined);
+		return indestructibleWalls.length > 0
+	}
+
 	run() {
 		for (const scout of this.scouts) {
 			// Check if room might be connected to newbie/respawn zone
-			const indestructibleWalls = _.filter(scout.room.walls, wall => wall.hits == undefined);
-			if (indestructibleWalls.length > 0) {
+			if (this.hasIndestrucibleWalls(scout.room)) {
 				log.debug(`suiciding scout since newbie room discovered: ${this.room?.print}`)
-				scout.suicide() // just respawn since this is cheaper than going back to colony
+				scout.retire()
 				continue
 			}
 		}
