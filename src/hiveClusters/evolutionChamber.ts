@@ -1,36 +1,36 @@
-import {$} from '../caching/GlobalCache';
-import {Colony} from '../Colony';
-import {log} from '../console/log';
-import {TerminalNetworkV2} from '../logistics/TerminalNetwork_v2';
-import {TransportRequestGroup} from '../logistics/TransportRequestGroup';
-import {Mem} from '../memory/Memory';
-import {Pathing} from '../movement/Pathing';
-import {Priority} from '../priorities/priorities';
-import {profile} from '../profiler/decorator';
-import {Abathur, Reaction} from '../resources/Abathur';
-import {BOOST_PARTS, BOOST_TIERS, BoostType, REAGENTS} from '../resources/map_resources';
-import {getPosFromBunkerCoord, reagentLabSpots} from '../roomPlanner/layouts/bunker';
-import {Stats} from '../stats/stats';
-import {randint} from '../utilities/random';
-import {rightArrow} from '../utilities/stringConstants';
-import {ema} from '../utilities/utils';
-import {Visualizer} from '../visuals/Visualizer';
-import {HiveCluster} from './_HiveCluster';
+import { $ } from '../caching/GlobalCache';
+import { Colony } from '../Colony';
+import { log } from '../console/log';
+import { TerminalNetworkV2 } from '../logistics/TerminalNetwork_v2';
+import { TransportRequestGroup } from '../logistics/TransportRequestGroup';
+import { Mem } from '../memory/Memory';
+import { Pathing } from '../movement/Pathing';
+import { Priority } from '../priorities/priorities';
+import { profile } from '../profiler/decorator';
+import { Abathur, Reaction } from '../resources/Abathur';
+import { BOOST_PARTS, BOOST_TIERS, BoostType, REAGENTS } from '../resources/map_resources';
+import { getPosFromBunkerCoord, reagentLabSpots } from '../roomPlanner/layouts/bunker';
+import { Stats } from '../stats/stats';
+import { randint } from '../utilities/random';
+import { rightArrow } from '../utilities/stringConstants';
+import { ema } from '../utilities/utils';
+import { Visualizer } from '../visuals/Visualizer';
+import { HiveCluster } from './_HiveCluster';
 
 const LabStatus = {
-	Idle             : 0,
+	Idle: 0,
 	AcquiringMinerals: 1,
-	LoadingLabs      : 2,
-	Synthesizing     : 3,
-	UnloadingLabs    : 4,
+	LoadingLabs: 2,
+	Synthesizing: 3,
+	UnloadingLabs: 4,
 };
 
 const LabStageTimeouts = {
-	Idle             : Infinity,
+	Idle: Infinity,
 	AcquiringMinerals: 50,
-	LoadingLabs      : 50,
-	Synthesizing     : 10000,
-	UnloadingLabs    : 50,
+	LoadingLabs: 50,
+	Synthesizing: 10000,
+	UnloadingLabs: 50,
 };
 
 const LAB_USAGE_WINDOW = 100;
@@ -47,12 +47,12 @@ interface EvolutionChamberMemory {
 }
 
 const getDefaultEvolutionChamberMemory: () => EvolutionChamberMemory = () => ({
-	status        : LabStatus.Idle,
-	statusTick    : 0,
+	status: LabStatus.Idle,
+	statusTick: 0,
 	activeReaction: undefined,
-	stats         : {
+	stats: {
 		totalProduction: {},
-		avgUsage       : 1,
+		avgUsage: 1,
 	}
 });
 
@@ -70,9 +70,7 @@ function labsAreEmpty(labs: StructureLab[]): boolean {
 @profile
 export class EvolutionChamber extends HiveCluster {
 
-	terminal: StructureTerminal;							// The colony terminal
 	terminalNetwork: TerminalNetworkV2;						// Reference to Overmind.terminalNetwork
-	labs: StructureLab[];									// Colony labs
 	reagentLabs: StructureLab[];
 	productLabs: StructureLab[];
 	boostingLabs: StructureLab[];
@@ -92,55 +90,46 @@ export class EvolutionChamber extends HiveCluster {
 	constructor(colony: Colony, terminal: StructureTerminal) {
 		super(colony, terminal, 'evolutionChamber');
 		this.memory = Mem.wrap(this.colony.memory, 'evolutionChamber', getDefaultEvolutionChamberMemory);
+	}
+
+	refresh() {
+		this.memory = Mem.wrap(this.colony.memory, 'evolutionChamber', getDefaultEvolutionChamberMemory);
 		// Register physical components
-		this.terminal = terminal;
 		this.terminalNetwork = Overmind.terminalNetwork as TerminalNetworkV2;
-		this.labs = colony.labs;
+		this.labReservations = {};
+		this.neededBoosts = {};
+
 		// Reserve some easily-accessible labs which are restricted not to be reagent labs
 		const restrictedLabs = this.colony.bunker
-							   ? _.filter(this.labs, lab => lab.pos.findInRange(this.colony.spawns, 1).length > 0)
-							   : _.take(_.sortBy(this.labs, lab => Pathing.distance(this.terminal.pos, lab.pos)), 1);
+			? _.filter(this.colony.labs, lab => lab.pos.findInRange(this.colony.spawns, 1).length > 0)
+			: _.take(_.sortBy(this.colony.labs, lab => Pathing.distance(this.colony.terminal!.pos, lab.pos)), 1);
 		const getReagentLabs: () => StructureLab[] = () => {
 			if (this.colony.bunker) {
 				const reagentLabPositions = _.map(reagentLabSpots, coord => getPosFromBunkerCoord(coord, this.colony));
 				const preferredReagentLabs = _.compact(_.map(reagentLabPositions,
-															 pos => pos.lookForStructure(STRUCTURE_LAB)));
+					pos => pos.lookForStructure(STRUCTURE_LAB)));
 				if (preferredReagentLabs.length == 2) {
 					return <StructureLab[]>preferredReagentLabs;
 				}
 			}
 			// Reagent labs are range=2 from all other labs and are not a boosting lab
-			const range2Labs = _.filter(this.labs, lab => _.all(this.labs, otherLab => lab.pos.inRangeTo(otherLab, 2)));
+			const range2Labs = _.filter(this.colony.labs, lab => _.all(this.colony.labs, otherLab => lab.pos.inRangeTo(otherLab, 2)));
 			const reagentLabCandidates = _.filter(range2Labs, lab => !_.any(restrictedLabs, l => l.id == lab.id));
 			return _.take(_.sortBy(reagentLabCandidates, lab => -1 * neighboringLabs(lab.pos).length), 2);
 		};
 		this.reagentLabs = getReagentLabs();
 
 		// Product labs are everything that isn't a reagent lab. (boostingLab can also be a productLab)
-		this.productLabs = _.difference(this.labs, this.reagentLabs);
+		this.productLabs = _.difference(this.colony.labs, this.reagentLabs);
 		// Boosting labs are product labs sorted by distance to terminal
 		const unrestrictedBoostingLabs = _.sortBy(_.difference(this.productLabs, restrictedLabs),
-												  lab => Pathing.distance(this.terminal.pos, lab.pos));
+			lab => Pathing.distance(this.colony.terminal!.pos, lab.pos));
 		this.boostingLabs = [...restrictedLabs, ...unrestrictedBoostingLabs];
 		// This keeps track of reservations for boosting
 		this.labReservations = {};
 		// this.boostQueue = {};
 		this.neededBoosts = {};
-		if (this.colony.commandCenter && this.colony.layout == 'twoPart') { // TODO: deprecate soon
-			// in two-part layout, evolution chamber shares a common request group with command center
-			this.transportRequests = this.colony.commandCenter.transportRequests;
-		} else {
-			// otherwise (in bunker layout), it uses colony/hatchery transport requests
-			this.transportRequests = this.colony.transportRequests;
-		}
-	}
-
-	refresh() {
-		this.memory = Mem.wrap(this.colony.memory, 'evolutionChamber', getDefaultEvolutionChamberMemory);
-		$.refreshRoom(this);
-		$.refresh(this, 'terminal', 'labs', 'boostingLabs', 'reagentLabs', 'productLabs');
-		this.labReservations = {};
-		this.neededBoosts = {};
+		this.transportRequests = this.colony.transportRequests;
 	}
 
 	spawnMoarOverlords() {
@@ -154,15 +143,15 @@ export class EvolutionChamber extends HiveCluster {
 		}
 
 		const reagents: ResourceConstant[] = this.memory.activeReaction
-											 ? REAGENTS[this.memory.activeReaction.mineralType]
-											 : [];
+			? REAGENTS[this.memory.activeReaction.mineralType]
+			: [];
 		const amount = this.memory.activeReaction ? this.memory.activeReaction.amount : Infinity;
 
 		switch (this.memory.status) {
 			case LabStatus.Idle:
 				if (this.memory.activeReaction) {
 					log.info(`${this.colony.print}: starting synthesis of ${reagents[0]} + ${reagents[1]} ` +
-							 `${rightArrow} ${this.memory.activeReaction.mineralType}`);
+						`${rightArrow} ${this.memory.activeReaction.mineralType}`);
 					this.memory.status = LabStatus.AcquiringMinerals;
 					this.memory.statusTick = Game.time;
 				}
@@ -177,7 +166,7 @@ export class EvolutionChamber extends HiveCluster {
 
 			case LabStatus.LoadingLabs:
 				if (_.all(this.reagentLabs,
-						  lab => lab.mineralAmount >= amount && _.includes(reagents, lab.mineralType))) {
+					lab => lab.mineralAmount >= amount && _.includes(reagents, lab.mineralType))) {
 					this.memory.status = LabStatus.Synthesizing;
 					this.memory.statusTick = Game.time;
 				}
@@ -191,7 +180,7 @@ export class EvolutionChamber extends HiveCluster {
 				break;
 
 			case LabStatus.UnloadingLabs:
-				const unloadLabs = _.filter(this.labs, lab => !this.labReservations[lab.id]);
+				const unloadLabs = _.filter(this.colony.labs, lab => !this.labReservations[lab.id]);
 				if (_.all(unloadLabs, lab => lab.mineralAmount == 0)) {
 					this.memory.status = LabStatus.Idle;
 					this.memory.statusTick = Game.time;
@@ -234,7 +223,7 @@ export class EvolutionChamber extends HiveCluster {
 		}
 		if (timeout) {
 			log.warning(`${this.print}: stuck in state ${this.memory.status} for ${ticksInStatus} ticks, ` +
-						`rebuilding reaction queue and reverting to idle state!`);
+				`rebuilding reaction queue and reverting to idle state!`);
 			this.memory.status = LabStatus.Idle;
 			this.memory.statusTick = Game.time;
 			this.memory.activeReaction = undefined;
@@ -244,32 +233,32 @@ export class EvolutionChamber extends HiveCluster {
 
 	private registerReagentLabRequests(reagentLabs: [StructureLab, StructureLab]): void {
 		if (this.memory.activeReaction) {
-			const {mineralType, amount} = this.memory.activeReaction;
+			const { mineralType, amount } = this.memory.activeReaction;
 			const [ing1, ing2] = REAGENTS[mineralType];
 			const [lab1, lab2] = reagentLabs;
 			if (!lab1 || !lab2) return;
 			// Empty out any incorrect minerals and request the correct reagents
 			if (this.memory.status == LabStatus.UnloadingLabs || (lab1.mineralType != ing1 && lab1.mineralAmount > 0)) {
-				this.transportRequests.requestOutput(lab1, Priority.Normal, {resourceType: lab1.mineralType!});
+				this.transportRequests.requestOutput(lab1, Priority.Normal, { resourceType: lab1.mineralType! });
 			} else if (this.memory.status == LabStatus.LoadingLabs && lab1.mineralAmount < amount) {
 				this.transportRequests.requestInput(lab1, Priority.Normal, {
 					resourceType: ing1,
-					amount      : amount - lab1.mineralAmount,
+					amount: amount - lab1.mineralAmount,
 				});
 			}
 			if (this.memory.status == LabStatus.UnloadingLabs || (lab2.mineralType != ing2 && lab2.mineralAmount > 0)) {
-				this.transportRequests.requestOutput(lab2, Priority.Normal, {resourceType: lab2.mineralType!});
+				this.transportRequests.requestOutput(lab2, Priority.Normal, { resourceType: lab2.mineralType! });
 			} else if (this.memory.status == LabStatus.LoadingLabs && lab2.mineralAmount < amount) {
 				this.transportRequests.requestInput(lab2, Priority.Normal, {
 					resourceType: ing2,
-					amount      : amount - lab2.mineralAmount,
+					amount: amount - lab2.mineralAmount,
 				});
 			}
 		} else {
 			// Labs should be empty when no reaction process is currently happening
 			for (const lab of reagentLabs) {
 				if (lab.mineralType && lab.mineralAmount > 0) {
-					this.transportRequests.requestOutput(lab, Priority.Normal, {resourceType: lab.mineralType});
+					this.transportRequests.requestOutput(lab, Priority.Normal, { resourceType: lab.mineralType });
 				}
 			}
 		}
@@ -277,21 +266,21 @@ export class EvolutionChamber extends HiveCluster {
 
 	private registerProductLabRequests(labs: StructureLab[]): void {
 		if (this.memory.activeReaction) {
-			const {mineralType, amount} = this.memory.activeReaction;
+			const { mineralType, amount } = this.memory.activeReaction;
 			for (const lab of labs) {
 				const labHasWrongMineral = lab.mineralType != mineralType && lab.mineralAmount > 0;
 				const labIsFull = lab.mineralAmount == lab.mineralCapacity;
 				// Empty out incorrect minerals or if it's time to unload or if lab is full
 				if ((this.memory.status == LabStatus.UnloadingLabs && lab.mineralAmount > 0) ||
 					labHasWrongMineral || labIsFull) {
-					this.transportRequests.requestOutput(lab, Priority.NormalLow, {resourceType: lab.mineralType!});
+					this.transportRequests.requestOutput(lab, Priority.NormalLow, { resourceType: lab.mineralType! });
 				}
 			}
 		} else {
 			// Labs should be empty when no reaction process is currently happening
 			for (const lab of labs) {
 				if (lab.mineralType && lab.mineralAmount > 0) {
-					this.transportRequests.requestOutput(lab, Priority.NormalLow, {resourceType: lab.mineralType});
+					this.transportRequests.requestOutput(lab, Priority.NormalLow, { resourceType: lab.mineralType });
 				}
 			}
 		}
@@ -299,14 +288,14 @@ export class EvolutionChamber extends HiveCluster {
 
 	private registerBoosterLabRequests(labs: StructureLab[]): void {
 		for (const lab of labs) {
-			const {mineralType, amount} = this.labReservations[lab.id];
+			const { mineralType, amount } = this.labReservations[lab.id];
 			// Empty out incorrect minerals
 			if (lab.mineralType != mineralType && lab.mineralAmount > 0) {
-				this.transportRequests.requestOutput(lab, Priority.High, {resourceType: lab.mineralType!});
+				this.transportRequests.requestOutput(lab, Priority.High, { resourceType: lab.mineralType! });
 			} else {
 				this.transportRequests.requestInput(lab, Priority.High, {
 					resourceType: <ResourceConstant>mineralType,
-					amount      : amount - lab.mineralAmount
+					amount: amount - lab.mineralAmount
 				});
 			}
 		}
@@ -320,7 +309,7 @@ export class EvolutionChamber extends HiveCluster {
 
 		// Separate product labs into actively boosting or ready for reaction
 		const [boostingProductLabs, reactionProductLabs] = _.partition(this.productLabs,
-																	   lab => this.labReservations[lab.id]);
+			lab => this.labReservations[lab.id]);
 
 		// Handle energy requests for labs with different priorities
 		const boostingRefillLabs = _.filter(boostingProductLabs, lab => lab.energy < lab.energyCapacity);
@@ -341,7 +330,7 @@ export class EvolutionChamber extends HiveCluster {
 	/* Reserves a product lab for boosting with a compound unrelated to production */
 	private reserveLab(lab: StructureLab, resourceType: ResourceConstant, amount: number) {
 		// _.remove(this.productLabs, productLab => productLab.id == lab.id); // This gets excluded in registerRequests
-		this.labReservations[lab.id] = {mineralType: resourceType, amount: Math.min(amount, LAB_MINERAL_CAPACITY)};
+		this.labReservations[lab.id] = { mineralType: resourceType, amount: Math.min(amount, LAB_MINERAL_CAPACITY) };
 	}
 
 	/* Return the amount of a given resource necessary to fully boost a creep body */
@@ -458,7 +447,7 @@ export class EvolutionChamber extends HiveCluster {
 
 			const product = this.memory.activeReaction ? this.memory.activeReaction.mineralType : undefined;
 			const reagents = this.memory.activeReaction ? REAGENTS[this.memory.activeReaction.mineralType]
-														: [undefined, undefined];
+				: [undefined, undefined];
 
 			let amountUnavailable = 0;
 			if (boost == product) {
@@ -530,7 +519,7 @@ export class EvolutionChamber extends HiveCluster {
 					});
 					break;
 				case LabStatus.UnloadingLabs:
-					_.forEach(this.labs, lab => {
+					_.forEach(this.colony.labs, lab => {
 						if (lab.mineralType == product ||
 							lab.mineralType == reagents[0] ||
 							lab.mineralType == reagents[1]) {
@@ -590,10 +579,10 @@ export class EvolutionChamber extends HiveCluster {
 	}
 
 	private drawLabReport(coord: Coord): Coord {
-		let {x, y} = coord;
+		let { x, y } = coord;
 		const height = 2;
 		const titleCoords = Visualizer.section(`${this.colony.name} Evolution Chamber`,
-											   {x, y, roomName: this.room.name}, 9.5, height + .1);
+			{ x, y, roomName: this.room.name }, 9.5, height + .1);
 		const boxX = titleCoords.x;
 		y = titleCoords.y + 0.25;
 
@@ -622,26 +611,26 @@ export class EvolutionChamber extends HiveCluster {
 		const activeReaction = this.memory.activeReaction;
 		const mineral = activeReaction ? activeReaction.mineralType : 'NONE';
 
-		Visualizer.text(`Status: ${status}`, {x: boxX, y: y, roomName: this.room.name});
+		Visualizer.text(`Status: ${status}`, { x: boxX, y: y, roomName: this.room.name });
 		y += 1;
 		if (this.memory.status == LabStatus.Synthesizing && activeReaction) {
 			const amountDone = _.sum(_.map(this.productLabs,
-										   lab => lab.mineralType == activeReaction!.mineralType ? lab.mineralAmount : 0));
-			Visualizer.text(activeReaction.mineralType, {x: boxX, y: y, roomName: this.room.name});
+				lab => lab.mineralType == activeReaction!.mineralType ? lab.mineralAmount : 0));
+			Visualizer.text(activeReaction.mineralType, { x: boxX, y: y, roomName: this.room.name });
 			Visualizer.barGraph([amountDone, activeReaction.amount],
-								{x: boxX + 4, y: y, roomName: this.room.name}, 5);
+				{ x: boxX + 4, y: y, roomName: this.room.name }, 5);
 			y += 1;
 		} else {
-			Visualizer.text(`Active reaction: ${mineral}`, {x: boxX, y: y, roomName: this.room.name});
+			Visualizer.text(`Active reaction: ${mineral}`, { x: boxX, y: y, roomName: this.room.name });
 			y += 1;
 		}
-		return {x: x, y: y + .25};
+		return { x: x, y: y + .25 };
 	}
 
 	visuals(coord: Coord): Coord {
 		const vis = this.room.visual;
 		// Lab visuals
-		for (const lab of this.labs) {
+		for (const lab of this.colony.labs) {
 			if (lab.mineralType) {
 				vis.resource(lab.mineralType, lab.pos.x, lab.pos.y);
 			}

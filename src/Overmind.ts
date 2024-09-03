@@ -21,6 +21,8 @@ import { Directive } from 'directives/Directive';
 import { PowerZerg } from 'zerg/PowerZerg';
 import { Overlord } from 'overlords/Overlord';
 import { SpawnGroup } from 'logistics/SpawnGroup';
+import { DirectiveOutpost } from 'directives/colony/outpost';
+import { DirectiveSKOutpost } from 'directives/colony/outpostSK';
 
 const profilerRooms: {[colonyName: string]: boolean} = {};
 
@@ -59,6 +61,7 @@ export default class _Overmind implements IOvermind {
 
 
     constructor() {
+		log.debug('Rebuilding Overmind object!');
         this.memory = Memory.Overmind;
         this.overseer = new Overseer();
         this.shouldBuild = true;
@@ -80,18 +83,13 @@ export default class _Overmind implements IOvermind {
         this.expansionPlanner = new ExpansionPlanner();
         this.roomIntel = new RoomIntel();
         this.exceptions = [];
+
+		// new colonies only get instantiated here
+		// make sure to trigger a rebuild after colonization
+		// TODO: what is triggering a rebuild?
+		this.registerColonies();
     }
-
-	build() {
-        log.debug('Rebuilding Overmind object!');
-        this.cache.build();
-        this.registerColonies();
-        this.registerDirectives();
-        _.forEach(this.colonies, c => c.spawnMoarOverlords());
-        _.forEach(this.directives, d => d.spawnMoarOverlords());
-        this.shouldBuild = false;
-	}
-
+	
     refresh() {
         this.shouldBuild = true;
         this.memory = Memory.Overmind;
@@ -101,8 +99,13 @@ export default class _Overmind implements IOvermind {
         this.terminalNetwork.refresh();
         this.tradeNetwork.refresh();
         this.expansionPlanner.refresh();
-        this.refreshColonies();
-        this.refreshDirectives();
+
+		_.forEach(this.colonies, c => c.refresh())
+		_.forEach(this.colonies, c => c.spawnMoarOverlords());
+
+		this.registerDirectives();
+		_.forEach(this.directives, d => d.refresh())
+		_.forEach(this.directives, d => d.spawnMoarOverlords());
 
         for (const o in this.overlords) {
             this.overlords[o].refresh();
@@ -111,6 +114,25 @@ export default class _Overmind implements IOvermind {
             this.spawnGroups[s].refresh();
         }
         this.shouldBuild = false;
+    }
+	
+    init() {
+        this.try(() => RoomIntel.init());
+        this.try(() => this.tradeNetwork.init());
+        this.try(() => this.terminalNetwork.init());
+        this.try(() => this.overseer.init(), 'overseer.init()');
+
+        for (const colonyName in this.colonies) {
+            const usedCPU = Game.cpu.getUsed();
+            this.try(() => this.colonies[colonyName].init(), colonyName);
+            Stats.log('cpu.usage.' + colonyName + '.init', Game.cpu.getUsed() - usedCPU);
+        }
+
+        for (const spawnGroupName in this.spawnGroups) {
+            this.try(() => this.spawnGroups[spawnGroupName].init(), spawnGroupName);
+        }
+
+        this.try(() => this.expansionPlanner.init());
     }
 
 	private try(callback: () => any, identifier?: string): void {
@@ -173,7 +195,8 @@ export default class _Overmind implements IOvermind {
 			this.colonyMap[roomName] = roomName;
         }
 		
-		const outpostFlagMap = _.groupBy(this.cache.outpostFlags, flag => flag.memory[MEM.COLONY]);
+		const outpostFlags = _.filter(Game.flags, flag => DirectiveOutpost.filter(flag) || DirectiveSKOutpost.filter(flag));
+		const outpostFlagMap = _.groupBy(outpostFlags, flag => flag.memory[MEM.COLONY]);
 		const outpostMap = _.mapValues(outpostFlagMap, flag => _.map(flag, f => (f.memory.setPos || f.pos).roomName))
 		for (const colonyName in outpostMap) {
 			for (const outpostName of outpostMap[colonyName]) {
@@ -191,18 +214,13 @@ export default class _Overmind implements IOvermind {
                 continue;
             }
 			
-			this.try(() => this.colonies[colonyName] = new Colony(id, colonyName, outpostMap[colonyName]))
+			// TODO: maybe calculate outposts on the fly?
+			this.colonies[colonyName] = new Colony(id, colonyName, outpostMap[colonyName])
             id++;
         }
     }
 
-    refreshColonies() {
-        for (const colony in this.colonies) {
-			this.try(() => this.colonies[colony].refresh())
-        }
-    }
-
-    registerDirectives(spawnOverlords: boolean = false) {
+    registerDirectives() {
 		for (const flag in Game.flags) {
             if (this.directives[flag]) {
                 continue;
@@ -219,44 +237,13 @@ export default class _Overmind implements IOvermind {
                 }
             }
 
+			// directives add themselves to this.directives
+			// FIXME: this is not a good programming style
             const directive = DirectiveWrapper(Game.flags[flag])
-			const found = !!this.directives[flag];
-
-            if (directive && found && spawnOverlords) {
-				directive.spawnMoarOverlords();
-			}
-
             if (!directive && !SUPPRESS_INVALID_DIRECTIVE_ALERTS && Game.time % 10 == 0) {
 				log.alert('Flag [' + flag + ' @ ' + Game.flags[flag].pos.print + '] does not match ' + 'a valid directive color code! (Refer to /src/directives/initializer.ts)' + alignedNewline + 'Use removeErrantFlags() to remove flags which do not match a directive.');
             }
         }
-    }
-
-    refreshDirectives() {
-        for (const directive in this.directives) {
-            this.directives[directive].refresh();
-        }
-
-        this.registerDirectives(true);
-    }
-
-    init() {
-        this.try(() => RoomIntel.init());
-        this.try(() => this.tradeNetwork.init());
-        this.try(() => this.terminalNetwork.init());
-        this.try(() => this.overseer.init(), 'overseer.init()');
-
-        for (const colonyName in this.colonies) {
-            const usedCPU = Game.cpu.getUsed();
-            this.try(() => this.colonies[colonyName].init(), colonyName);
-            Stats.log('cpu.usage.' + colonyName + '.init', Game.cpu.getUsed() - usedCPU);
-        }
-
-        for (const spawnGroupName in this.spawnGroups) {
-            this.try(() => this.spawnGroups[spawnGroupName].init(), spawnGroupName);
-        }
-
-        this.try(() => this.expansionPlanner.init());
     }
 
     run() {

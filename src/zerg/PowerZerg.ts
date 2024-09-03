@@ -42,7 +42,7 @@ export abstract class PowerZerg extends AnyZerg {
 			this.room = this.overlord.colony.room;
 		}
 		if (this.pos == undefined && this.overlord) {
-			this.pos = this.overlord.colony.powerSpawn ? this.overlord.colony.powerSpawn.pos
+			this.pos = this.overlord.colony.room.powerSpawn ? this.overlord.colony.room.powerSpawn.pos
 													   : this.overlord.colony.pos;
 		}
 		Overmind.powerZerg[this.name] = this;
@@ -75,7 +75,7 @@ export abstract class PowerZerg extends AnyZerg {
 				this.room = this.overlord.colony.room;
 			}
 			if (this.pos == undefined && this.overlord) {
-				this.pos = this.overlord.colony.powerSpawn ? this.overlord.colony.powerSpawn.pos
+				this.pos = this.overlord.colony.room.powerSpawn ? this.overlord.colony.room.powerSpawn.pos
 														   : this.overlord.colony.pos;
 			}
 		} else {

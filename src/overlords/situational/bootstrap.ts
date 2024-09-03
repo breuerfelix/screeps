@@ -29,11 +29,11 @@ export class BootstrappingOverlord extends Overlord {
 		super(directive, 'bootstrap', priority);
 		this.fillers = this.zerg(Roles.filler);
 		// Calculate structures fillers can supply / withdraw from
-		this.supplyStructures = _.filter([...this.colony.spawns, ...this.colony.extensions],
+		this.supplyStructures = _.filter([...this.colony.spawns, ...this.colony.room.extensions],
 										 structure => structure.energy < structure.energyCapacity);
 		this.withdrawStructures = _.filter(_.compact([this.colony.storage!,
 													  this.colony.terminal!,
-													  this.colony.powerSpawn!,
+													  this.colony.room.powerSpawn!,
 													  ...this.room.containers,
 													  ...this.room.links,
 													  ...this.room.towers,

@@ -17,6 +17,10 @@ export class GameCache implements ICache {
 		this.overlords = {};
 		this.creepsByColony = {};
 		this.targets = {};
+		this.outpostFlags = [];
+	}
+
+	private cacheOutposts() {
 		this.outpostFlags = _.filter(Game.flags, flag => DirectiveOutpost.filter(flag)
 														 || DirectiveSKOutpost.filter(flag));
 	}
@@ -58,13 +62,8 @@ export class GameCache implements ICache {
 		}
 	}
 
-	build() {
-		this.cacheCreepsByColony();
-		this.cacheOverlords();
-		this.cacheTargets();
-	}
-
 	refresh() {
+		this.cacheOutposts();
 		this.cacheCreepsByColony();
 		this.cacheOverlords();
 		this.cacheTargets();

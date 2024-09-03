@@ -359,10 +359,15 @@ export class TerminalNetworkV2 implements ITerminalNetwork {
 	 */
 	addColony(colony: Colony): void {
 		if (!(colony.terminal && colony.terminal.my && colony.level >= 6)) {
-			log.error(`Cannot add colony ${colony.print} to terminal network!`);
-		} else {
-			this.colonies.push(colony); // add colony to list
+			//log.error(`Cannot add colony ${colony.print} to terminal network!`);
+			return
 		}
+
+		for (const c of this.colonies) {
+			if (c.name == colony.name) return
+		}
+		
+		this.colonies.push(colony);
 	}
 
 	getAssets(): { [resourceType: string]: number } {

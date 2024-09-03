@@ -209,7 +209,7 @@ export class DirectiveStronghold extends Directive {
 
 	run(): void {
 		// Check frequently when almost mined and occasionally otherwise
-		if (this.colony.commandCenter && this.colony.commandCenter.observer) {
+		if (this.colony.commandCenter && this.colony.room.observer) {
 			this.colony.commandCenter.requestRoomObservation(this.pos.roomName);
 		}
 

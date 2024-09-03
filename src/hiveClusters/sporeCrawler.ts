@@ -13,8 +13,6 @@ import {HiveCluster} from './_HiveCluster';
  */
 @profile
 export class SporeCrawler extends HiveCluster {
-
-	towers: StructureTower[];
 	memory: undefined;
 
 	static settings = {
@@ -24,22 +22,15 @@ export class SporeCrawler extends HiveCluster {
 
 	constructor(colony: Colony, tower: StructureTower) {
 		super(colony, tower, 'sporeCrawler');
-		// Register structure components
-		this.towers = this.colony.towers;
 	}
 
-	refresh() {
-		$.refreshRoom(this);
-		$.refresh(this, 'towers');
-	}
+	refresh() {}
 
-	spawnMoarOverlords() {
-
-	}
+	spawnMoarOverlords() {}
 
 	private registerEnergyRequests() {
 		// Request energy from transporters if below request threshold
-		for (const tower of this.towers) {
+		for (const tower of this.colony.room.towers) {
 			if (tower.energy < SporeCrawler.settings.requestThreshold) {
 				const multiplier = tower.energy < SporeCrawler.settings.criticalEnergyThreshold ? 2 : 1;
 				const dAmountdt = this.room.hostiles.length > 0 ? 10 : 0;
@@ -53,7 +44,7 @@ export class SporeCrawler extends HiveCluster {
 	}
 
 	private attack(target: Creep): void {
-		for (const tower of this.towers) {
+		for (const tower of this.colony.room.towers) {
 			const result = tower.attack(target);
 			if (result == OK) {
 				if (target.hitsPredicted == undefined) target.hitsPredicted = target.hits;
@@ -63,7 +54,7 @@ export class SporeCrawler extends HiveCluster {
 	}
 
 	private scatterShot(targets: Creep[]): void {
-		for (const tower of this.towers) {
+		for (const tower of this.colony.room.towers) {
 			const target = _.sample(targets);
 			const result = tower.attack(target);
 			if (result == OK) {
@@ -73,40 +64,15 @@ export class SporeCrawler extends HiveCluster {
 		}
 	}
 
-	// private attackNearestEnemy(prioritizeHealers = false) {
-	// 	if (prioritizeHealers) {
-	// 		let healers = _.filter(this.room.hostiles, creep => creep.getActiveBodyparts(HEAL) > 0);
-	// 		if (healers.length > 0) {
-	// 			let healer = this.pos.findClosestByRange(healers);
-	// 			if (healer) {
-	// 				return this.tower.attack(healer);
-	// 			}
-	// 		}
-	// 	}
-	// 	let closestHostile = this.pos.findClosestByRange(FIND_HOSTILE_CREEPS);
-	// 	if (closestHostile) {
-	// 		return this.tower.attack(closestHostile);
-	// 	}
-	// }
-
-	// private healNearestAlly() {
-	// 	var closestDamagedAlly = this.pos.findClosestByRange(FIND_MY_CREEPS, {
-	// 		filter: (c: Creep) => c.hits < c.hitsMax,
-	// 	});
-	// 	if (closestDamagedAlly) {
-	// 		return this.tower.heal(closestDamagedAlly);
-	// 	}
-	// }
-
 	private preventStructureDecay(includeRoads=true) {
-		if (this.towers.length < 1) return
+		if (this.colony.room.towers.length < 1) return
 
 		// expensive to check all rampart hits; only run in intermediate RCL
 		const dyingRamparts = _.filter(this.room.ramparts, rampart =>
 			rampart.hits < WorkerOverlord.settings.barrierHits.critical
 			&& this.colony.roomPlanner.barrierPlanner.barrierShouldBeHere(rampart.pos));
 		if (dyingRamparts.length > 0) {
-			for (const tower of this.towers) {
+			for (const tower of this.colony.room.towers) {
 				tower.repair(tower.pos.findClosestByRange(dyingRamparts)!);
 			}
 			return;
@@ -117,10 +83,10 @@ export class SporeCrawler extends HiveCluster {
 				road.hits < 0.2 * road.hitsMax && this.colony.roomPlanner.roadPlanner.roadShouldBeHere(road.pos),
 			);
 			if (decayingRoads.length > 0) {
-				const roadsToRepair = _.sample(decayingRoads, this.towers.length);
+				const roadsToRepair = _.sample(decayingRoads, this.colony.room.towers.length);
 				// ^ if |towers| > |roads| then this will have length of |roads|
 				for (const i in roadsToRepair) {
-					this.towers[i].repair(roadsToRepair[i]);
+					this.colony.room.towers[i].repair(roadsToRepair[i]);
 				}
 			}
 		}
@@ -179,7 +145,7 @@ export class SporeCrawler extends HiveCluster {
 		const closestDamagedAlly = this.pos.findClosestByRange(_.filter(this.room.creeps,
 																		creep => creep.hits < creep.hitsMax));
 		if (closestDamagedAlly) {
-			for (const tower of this.towers) {
+			for (const tower of this.colony.room.towers) {
 				tower.heal(closestDamagedAlly);
 			}
 			return;
@@ -193,10 +159,10 @@ export class SporeCrawler extends HiveCluster {
 			const timeToImpact = _.min(_.map(nukes, nuke => nuke.timeToLand));
 			if (timeToImpact) {
 				const repairHitsRemaining = _.sum(_.values(this.colony.overlords.work.nukeDefenseHitsRemaining));
-				const hitsRepairedPerTick = this.towers.length * TOWER_POWER_REPAIR;
+				const hitsRepairedPerTick = this.colony.room.towers.length * TOWER_POWER_REPAIR;
 				// Only repair using towers if it looks like you won't finish repairs in time
 				if (repairHitsRemaining > 0.9 * hitsRepairedPerTick * timeToImpact) {
-					for (const tower of this.towers) {
+					for (const tower of this.colony.room.towers) {
 						tower.repair(nearbyNukeRamparts[0]);
 					}
 					return;

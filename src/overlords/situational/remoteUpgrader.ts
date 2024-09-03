@@ -121,7 +121,7 @@ export class RemoteUpgradingOverlord extends Overlord {
 		}
 		// You're in the room, upgrade if you have energy
 		if (upgrader.carry.energy > 0) {
-			upgrader.task = Tasks.upgrade(this.upgradeSite.controller);
+			upgrader.task = Tasks.upgrade(this.upgradeSite.colony.controller);
 			return;
 		}
 		// If you're out of energy, recharge from link or battery

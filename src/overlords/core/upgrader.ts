@@ -30,7 +30,7 @@ export class UpgradingOverlord extends Overlord {
 			return;
 		}
 		if (this.colony.assets.energy > UpgradeSite.settings.energyBuffer
-			|| this.upgradeSite.controller.ticksToDowngrade < 500) {
+			|| this.upgradeSite.colony.controller.ticksToDowngrade < 500) {
 			let setup = Setups.upgraders.default;
 			if (this.colony.level == 8) {
 				setup = Setups.upgraders.rcl8;
@@ -69,12 +69,12 @@ export class UpgradingOverlord extends Overlord {
 				return;
 			}
 			// Sign controller if needed
-			if (!this.upgradeSite.controller.signedByMe &&
-				!this.upgradeSite.controller.signedByScreeps) {
-				upgrader.task = Tasks.signController(this.upgradeSite.controller);
+			if (!this.upgradeSite.colony.controller.signedByMe &&
+				!this.upgradeSite.colony.controller.signedByScreeps) {
+				upgrader.task = Tasks.signController(this.upgradeSite.colony.controller);
 				return;
 			}
-			upgrader.task = Tasks.upgrade(this.upgradeSite.controller);
+			upgrader.task = Tasks.upgrade(this.upgradeSite.colony.controller);
 		} else {
 			// Recharge from link or battery
 			if (this.upgradeSite.link && this.upgradeSite.link.energy > 0) {

@@ -21,7 +21,6 @@ interface UpgradeSiteMemory {
 export class UpgradeSite extends HiveCluster {
 
 	memory: UpgradeSiteMemory;
-	controller: StructureController;						// The controller for the site
 	upgradePowerNeeded: number;
 	link: StructureLink | undefined;						// The primary object receiving energy for the site
 	battery: StructureContainer | undefined; 				// The container to provide an energy buffer
@@ -38,43 +37,26 @@ export class UpgradeSite extends HiveCluster {
 
 	constructor(colony: Colony, controller: StructureController) {
 		super(colony, controller, 'upgradeSite');
-		this.controller = controller;
 		this.memory = Mem.wrap(this.colony.memory, 'upgradeSite');
-		this.upgradePowerNeeded = this.getUpgradePowerNeeded();
-		// Register bettery
-		$.set(this, 'battery', () => {
-			const allowableContainers = _.filter(this.room.containers, container =>
-				container.pos.findInRange(FIND_SOURCES, 1).length == 0); // only count containers that aren't near sources
-			return this.pos.findClosestByLimitedRange(allowableContainers, 3);
-		});
-		this.batteryPos = $.pos(this, 'batteryPos', () => {
-			if (this.battery) {
-				return this.battery.pos;
-			}
-			const inputSite = this.findInputConstructionSite();
-			if (inputSite) {
-				return inputSite.pos;
-			}
-			return this.calculateBatteryPos() || log.alert(`Upgrade site at ${this.pos.print}: no batteryPos!`);
-		});
-		if (this.batteryPos) this.colony.destinations.push({pos: this.batteryPos, order: 0});
-		// Register link
-		$.set(this, 'link', () => this.pos.findClosestByLimitedRange(colony.availableLinks, 3));
-		this.colony.linkNetwork.claimLink(this.link);
-		// // Energy per tick is sum of upgrader body parts and nearby worker body parts
-		// this.energyPerTick = $.number(this, 'energyPerTick', () =>
-		// 	_.sum(this.overlord.upgraders, upgrader => upgrader.getActiveBodyparts(WORK)) +
-		// 	_.sum(_.filter(this.colony.getCreepsByRole(WorkerSetup.role), worker =>
-		// 			  worker.pos.inRangeTo((this.link || this.battery || this).pos, 2)),
-		// 		  worker => worker.getActiveBodyparts(WORK)));
-		// Compute stats
-		this.stats();
 	}
 
 	refresh() {
 		this.memory = Mem.wrap(this.colony.memory, 'upgradeSite');
-		$.refreshRoom(this);
-		$.refresh(this, 'controller', 'battery', 'link');
+		this.upgradePowerNeeded = this.getUpgradePowerNeeded();
+		// Register bettery
+		const allowableContainers = _.filter(this.room.containers, container =>
+			container.pos.findInRange(FIND_SOURCES, 1).length == 0); // only count containers that aren't near sources
+		this.battery = this.pos.findClosestByLimitedRange(allowableContainers, 3);
+
+		this.batteryPos = this.calculateBatteryPos();
+
+		if (this.batteryPos) this.colony.destinations.push({pos: this.batteryPos, order: 0});
+		// Register link
+		this.link = this.pos.findClosestByLimitedRange(this.colony.availableLinks, 3);
+		this.colony.linkNetwork.claimLink(this.link);
+
+		// Compute stats
+		this.stats();
 	}
 
 	spawnMoarOverlords() {
@@ -91,30 +73,27 @@ export class UpgradeSite extends HiveCluster {
 	}
 
 	private getUpgradePowerNeeded(): number {
-		return $.number(this, 'upgradePowerNeeded', () => {
-			if (this.room.storage) { // Workers perform upgrading until storage is set up
-				const amountOver = Math.max(this.colony.assets.energy - UpgradeSite.settings.energyBuffer, 0);
-				let upgradePower = 1 + Math.floor(amountOver / UpgradeSite.settings.energyPerBodyUnit);
-				if (amountOver > 800000) {
-					upgradePower *= 4; // double upgrade power if we have lots of surplus energy
-				} else if (amountOver > 500000) {
-					upgradePower *= 2;
-				}
-				if (this.controller.level == 8) {
-					if (this.colony.assets.energy < 30000) {
-						upgradePower = 0;
-					} else {
-						upgradePower = Math.min(upgradePower, 15); // don't go above 15 work parts at RCL 8
-					}
-				} else if (this.controller.level >= 6) {
-					// Can set a room to upgrade at an accelerated rate manually
-					upgradePower = this.memory.speedFactor != undefined ? upgradePower * this.memory.speedFactor : upgradePower;
-				}
-				return upgradePower;
+		if (!this.room.storage) return 0;
+
+		const amountOver = Math.max(this.colony.assets.energy - UpgradeSite.settings.energyBuffer, 0);
+		let upgradePower = 1 + Math.floor(amountOver / UpgradeSite.settings.energyPerBodyUnit);
+		if (amountOver > 800000) {
+			upgradePower *= 4; // double upgrade power if we have lots of surplus energy
+		} else if (amountOver > 500000) {
+			upgradePower *= 2;
+		}
+		if (this.colony.controller.level == 8) {
+			if (this.colony.assets.energy < 30000) {
+				upgradePower = 0;
 			} else {
-				return 0;
+				upgradePower = Math.min(upgradePower, 15); // don't go above 15 work parts at RCL 8
 			}
-		});
+		} else if (this.colony.controller.level >= 6) {
+			// Can set a room to upgrade at an accelerated rate manually
+			upgradePower = this.memory.speedFactor != undefined ? upgradePower * this.memory.speedFactor : upgradePower;
+		}
+		
+		return upgradePower;
 	}
 
 	init(): void {
@@ -209,10 +188,10 @@ export class UpgradeSite extends HiveCluster {
 
 	visuals() {
 		// let info = [];
-		// if (this.controller.level != 8) {
-		// 	let progress = `${Math.floor(this.controller.progress / 1000)}K`;
-		// 	let progressTotal = `${Math.floor(this.controller.progressTotal / 1000)}K`;
-		// 	let percent = `${Math.floor(100 * this.controller.progress / this.controller.progressTotal)}`;
+		// if (this.colony.controller.level != 8) {
+		// 	let progress = `${Math.floor(this.colony.controller.progress / 1000)}K`;
+		// 	let progressTotal = `${Math.floor(this.colony.controller.progressTotal / 1000)}K`;
+		// 	let percent = `${Math.floor(100 * this.colony.controller.progress / this.colony.controller.progressTotal)}`;
 		// 	info.push(`Progress: ${progress}/${progressTotal} (${percent}%)`);
 		//
 		// }

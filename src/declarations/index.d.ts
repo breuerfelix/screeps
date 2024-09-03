@@ -71,8 +71,6 @@ interface ICache {
 	targets: { [ref: string]: string[] };
 	outpostFlags: Flag[];
 
-	build(): void;
-
 	refresh(): void;
 }
 
@@ -108,8 +106,6 @@ interface IOvermind {
 	tradeNetwork: ITradeNetwork;				// is actually TradeNetwork
 	expansionPlanner: IExpansionPlanner;
 	exceptions: Error[];
-
-	build(): void;
 
 	refresh(): void;
 

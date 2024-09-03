@@ -137,7 +137,7 @@ export class BarrierPlanner {
 		const barrierPositions = unpackCoordListAsPosList(this.memory.barrierCoordsPacked, this.colony.room.name);
 
 		// Add critical structures to barrier lookup
-		const criticalStructures: Structure[] = _.compact([...this.colony.towers,
+		const criticalStructures: Structure[] = _.compact([...this.colony.room.towers,
 														   ...this.colony.spawns,
 														   this.colony.storage!,
 														   this.colony.terminal!]);

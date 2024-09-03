@@ -120,7 +120,6 @@ export class RoomPlanner {
 		this.memory = Mem.wrap(this.colony.memory, 'roomPlanner', getDefaultRoomPlannerMemory);
 		this.barrierPlanner = new BarrierPlanner(this);
 		this.roadPlanner = new RoadPlanner(this);
-		this.refresh();
 	}
 
 	refresh(): void {
@@ -815,7 +814,7 @@ export class RoomPlanner {
 
 	private nextNeededLinkAnchor(): RoomPosition | undefined {
 		const linksEtAl = _.map((<(StructureLink | ConstructionSite)[]>[])
-									.concat(this.colony.links, _.filter(this.colony.constructionSites,
+									.concat(this.colony.room.links, _.filter(this.colony.constructionSites,
 																		site => site.structureType == STRUCTURE_LINK)),
 								s => s.pos);
 		// UpgradeSite goes first
@@ -835,7 +834,7 @@ export class RoomPlanner {
 	 * Builds links as they become available. UpgradeSite gets link first, then miningSites by distance.
 	 */
 	private buildNeededLinks() {
-		const numLinks = this.colony.links.length +
+		const numLinks = this.colony.room.links.length +
 						 _.filter(this.colony.constructionSites, site => site.structureType == STRUCTURE_LINK).length;
 		const numLinksAllowed = CONTROLLER_STRUCTURES.link[this.colony.level];
 		if (numLinksAllowed > numLinks &&

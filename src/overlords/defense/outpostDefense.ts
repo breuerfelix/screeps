@@ -35,7 +35,7 @@ export class OutpostDefenseOverlord extends CombatOverlord {
 
 	private handleHealer(healer: CombatZerg) {
 		if (CombatIntel.isHealer(healer) && healer.getActiveBodyparts(HEAL) == 0) {
-			if (this.colony.towers.length > 0) {
+			if (this.colony.room.towers.length > 0) {
 				return healer.goToRoom(this.colony.room.name); // go get healed
 			} else {
 				return healer.suicide(); // you're useless at this point // TODO: this isn't smart

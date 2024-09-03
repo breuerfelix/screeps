@@ -99,19 +99,13 @@ export class LogisticsNetwork {
 		this.requests = [];
 		this.targetToRequest = {};
 		this.colony = colony;
-		// this.transporters = _.filter(colony.getCreepsByRole(TransporterSetup.role),
-		// 							 creep => !creep.spawning &&
-		// 									  creep.carryCapacity >= LogisticsNetwork.settings.carryThreshold);
-		this.buffers = _.compact([colony.storage!, colony.terminal!]);
+		this.buffers = [];
+
 		this.cache = {
 			nextAvailability         : {},
 			predictedTransporterCarry: {},
 			resourceChangeRate       : {}
 		};
-		// this.logisticPositions = {};
-		// for (let room of this.colony.rooms) {
-		// 	this.logisticPositions[room.name] = _.map([...room.storageUnits, ...room.links], s => s.pos);
-		// }
 	}
 
 	refresh(): void {
@@ -119,6 +113,7 @@ export class LogisticsNetwork {
 		this.requests = [];
 		this.targetToRequest = {};
 		this._matching = undefined;
+		this.buffers = _.compact([this.colony.storage!, this.colony.terminal!]);
 		this.cache = {
 			nextAvailability         : {},
 			predictedTransporterCarry: {},

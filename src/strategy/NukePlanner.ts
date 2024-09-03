@@ -104,10 +104,10 @@ export class NukePlanner {
 
 	private handleNuker(colony: Colony): RoomPosition | undefined {
 
-		if (!colony.nuker ||
-			colony.nuker.cooldown > 0 ||
-			colony.nuker.ghodium < colony.nuker.ghodiumCapacity ||
-			colony.nuker.energy < colony.nuker.energyCapacity) {
+		if (!colony.room.nuker ||
+			colony.room.nuker.cooldown > 0 ||
+			colony.room.nuker.ghodium < colony.room.nuker.ghodiumCapacity ||
+			colony.room.nuker.energy < colony.room.nuker.energyCapacity) {
 			return;
 		}
 

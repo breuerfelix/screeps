@@ -25,13 +25,8 @@ interface CommandCenterMemory {
 export class CommandCenter extends HiveCluster {
 
 	memory: CommandCenterMemory;
-	storage: StructureStorage;								// The colony storage, also the instantiation object
 	link: StructureLink | undefined;						// Link closest to storage
-	terminal: StructureTerminal | undefined;				// The colony terminal
 	towers: StructureTower[];								// Towers within range 3 of storage are part of cmdCenter
-	powerSpawn: StructurePowerSpawn | undefined;			// Colony Power Spawn
-	nuker: StructureNuker | undefined;						// Colony nuker
-	observer: StructureObserver | undefined;				// Colony observer
 	transportRequests: TransportRequestGroup;				// Box for energy requests
 
 	private observeRoom: string | undefined;
@@ -43,32 +38,33 @@ export class CommandCenter extends HiveCluster {
 		refillTowersBelow    : 750,
 	};
 
+	get storage(): StructureStorage {
+		return this.colony.storage!;
+	}
+
+	get terminal(): StructureTerminal | undefined {
+		return this.colony.terminal;
+	}
+
 	constructor(colony: Colony, storage: StructureStorage) {
 		super(colony, storage, 'commandCenter');
 		this.memory = Mem.wrap(this.colony.memory, 'commandCenter');
-		// Register physical components
-		this.storage = storage;
-		this.terminal = colony.terminal;
-		this.powerSpawn = colony.powerSpawn;
-		this.nuker = colony.nuker;
-		this.observer = colony.observer;
-		if (this.colony.bunker) {
-			this.link = this.colony.bunker.anchor.findClosestByLimitedRange(colony.availableLinks, 1);
-			this.colony.linkNetwork.claimLink(this.link);
-			this.towers = this.colony.bunker.anchor.findInRange(colony.towers, 1);
-		} else {
-			this.link = this.pos.findClosestByLimitedRange(colony.availableLinks, 2);
-			this.colony.linkNetwork.claimLink(this.link);
-			this.towers = this.pos.findInRange(colony.towers, 3);
-		}
 		this.transportRequests = new TransportRequestGroup(); // commandCenter always gets its own request group
 		this.observeRoom = undefined;
 	}
 
 	refresh() {
 		this.memory = Mem.wrap(this.colony.memory, 'commandCenter');
-		$.refreshRoom(this);
-		$.refresh(this, 'storage', 'terminal', 'powerSpawn', 'nuker', 'observer', 'link', 'towers');
+		if (this.colony.bunker) {
+			this.link = this.colony.bunker.anchor.findClosestByLimitedRange(this.colony.availableLinks, 1);
+			this.colony.linkNetwork.claimLink(this.link);
+			this.towers = this.colony.bunker.anchor.findInRange(this.colony.room.towers, 1);
+		} else {
+			this.link = this.pos.findClosestByLimitedRange(this.colony.availableLinks, 2);
+			this.colony.linkNetwork.claimLink(this.link);
+			this.towers = this.pos.findInRange(this.colony.room.towers, 3);
+		}
+
 		this.transportRequests.refresh();
 		this.observeRoom = undefined;
 	}
@@ -95,8 +91,8 @@ export class CommandCenter extends HiveCluster {
 		// Try to match as many other structures as possible
 		const proximateStructures: Structure[] = _.compact([this.link!,
 															this.terminal!,
-															this.powerSpawn!,
-															this.nuker!,
+															this.colony.room.powerSpawn!,
+															this.colony.room.nuker!,
 															...this.towers]);
 		const numNearbyStructures = (pos: RoomPosition) =>
 			_.filter(proximateStructures, s => s.pos.isNearTo(pos) && !s.pos.isEqualTo(pos)).length;
@@ -146,23 +142,23 @@ export class CommandCenter extends HiveCluster {
 		_.forEach(refillTowers, tower => this.transportRequests.requestInput(tower, Priority.High));
 
 		// Refill power spawn
-		if (this.powerSpawn) {
-			if (this.powerSpawn.energy < this.powerSpawn.energyCapacity * .5) {
-				this.transportRequests.requestInput(this.powerSpawn, Priority.NormalLow);
-			} else if (this.powerSpawn.power < this.powerSpawn.powerCapacity * .5 && this.terminal
+		if (this.colony.room.powerSpawn) {
+			if (this.colony.room.powerSpawn.energy < this.colony.room.powerSpawn.energyCapacity * .5) {
+				this.transportRequests.requestInput(this.colony.room.powerSpawn, Priority.NormalLow);
+			} else if (this.colony.room.powerSpawn.power < this.colony.room.powerSpawn.powerCapacity * .5 && this.terminal
 					   && this.terminal.store.power && this.terminal.store.power >= 100) {
-				this.transportRequests.requestInput(this.powerSpawn, Priority.NormalLow, {resourceType: RESOURCE_POWER});
+				this.transportRequests.requestInput(this.colony.room.powerSpawn, Priority.NormalLow, {resourceType: RESOURCE_POWER});
 			}
 		}
 		// Refill nuker with low priority
-		if (this.nuker) {
-			if (this.nuker.energy < this.nuker.energyCapacity && (this.storage.energy > 200000 && this.nuker.cooldown
+		if (this.colony.room.nuker) {
+			if (this.colony.room.nuker.energy < this.colony.room.nuker.energyCapacity && (this.storage.energy > 200000 && this.colony.room.nuker.cooldown
 																  <= 1000 || this.storage.energy > 800000)) {
-				this.transportRequests.requestInput(this.nuker, Priority.Low);
+				this.transportRequests.requestInput(this.colony.room.nuker, Priority.Low);
 			}
-			if (this.nuker.ghodium < this.nuker.ghodiumCapacity
+			if (this.colony.room.nuker.ghodium < this.colony.room.nuker.ghodiumCapacity
 				&& this.colony.assets[RESOURCE_GHODIUM] >= LAB_MINERAL_CAPACITY) {
-				this.transportRequests.requestInput(this.nuker, Priority.Low, {resourceType: RESOURCE_GHODIUM});
+				this.transportRequests.requestInput(this.colony.room.nuker, Priority.Low, {resourceType: RESOURCE_GHODIUM});
 			}
 		}
 
@@ -179,9 +175,9 @@ export class CommandCenter extends HiveCluster {
 	}
 
 	private runObserver(): void {
-		if (this.observer) {
+		if (this.colony.room.observer) {
 			if (this.observeRoom) {
-				this.observer.observeRoom(this.observeRoom);
+				this.colony.room.observer.observeRoom(this.observeRoom);
 			} else if (CommandCenter.settings.enableIdleObservation && Game.time % 1000 < 100) {
 				const axisLength = MAX_OBSERVE_DISTANCE * 2 + 1;
 				const dx = Game.time % axisLength - MAX_OBSERVE_DISTANCE;
@@ -190,19 +186,19 @@ export class CommandCenter extends HiveCluster {
 					return;
 				}
 				const roomToObserve = Cartographer.findRelativeRoomName(this.pos.roomName, dx, dy);
-				this.observer.observeRoom(roomToObserve);
+				this.colony.room.observer.observeRoom(roomToObserve);
 				// // TODO OBSERVER FIX ONLY LOOK AT southwest corner
 				// const dx = Game.time % MAX_OBSERVE_DISTANCE;
 				// const dy = Game.time % (MAX_OBSERVE_DISTANCE ** 2);
 				// const roomToObserve = Cartographer.findRelativeRoomName(this.pos.roomName, dx, dy);
-				this.observer.observeRoom(roomToObserve);
+				this.colony.room.observer.observeRoom(roomToObserve);
 			}
 		}
 	}
 
 	private runPowerSpawn() {
-		if (this.powerSpawn && this.storage && this.colony.assets.energy > 300000 &&
-			this.powerSpawn.store.energy >= 50 && this.powerSpawn.store.power > 0) {
+		if (this.colony.room.powerSpawn && this.storage && this.colony.assets.energy > 300000 &&
+			this.colony.room.powerSpawn.store.energy >= 50 && this.colony.room.powerSpawn.store.power > 0) {
 			if (Game.market.credits < TraderJoe.settings.market.credits.canBuyAbove) {
 				// We need to get enough credits that we can start to buy things. Since mineral prices have plunged
 				// recently, often the only way to do this without net losing credits (after factoring in the
@@ -213,7 +209,7 @@ export class CommandCenter extends HiveCluster {
 			if (Game.time % 20 == 0) {
 				log.info(`Processing power in ${this.room.print}`);
 			}
-			this.powerSpawn.processPower();
+			this.colony.room.powerSpawn.processPower();
 		}
 	}
 

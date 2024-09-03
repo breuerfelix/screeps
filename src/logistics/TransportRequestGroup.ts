@@ -44,9 +44,7 @@ export class TransportRequestGroup {
 	supplyByID: { [id: string]: TransportRequest[] };
 	withdrawByID: { [id: string]: TransportRequest[] };
 
-	constructor() {
-		this.refresh();
-	}
+	constructor() {}
 
 	refresh(): void {
 		this.supply = blankPriorityQueue();

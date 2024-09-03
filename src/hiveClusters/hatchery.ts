@@ -63,11 +63,9 @@ const getDefaultHatcheryMemory: () => HatcheryMemory = () => ({
  */
 @profile
 export class Hatchery extends HiveCluster {
-
 	memory: HatcheryMemory;
 	spawns: StructureSpawn[]; 								// List of spawns in the hatchery
 	availableSpawns: StructureSpawn[]; 						// Spawns that are available to make stuff right now
-	extensions: StructureExtension[]; 						// List of extensions in the hatchery
 	energyStructures: (StructureSpawn | StructureExtension)[]; 	// All spawns and extensions
 	link: StructureLink | undefined; 						// The input link
 	towers: StructureTower[]; 								// All towers that aren't in the command center
@@ -93,22 +91,8 @@ export class Hatchery extends HiveCluster {
 		super(colony, headSpawn, 'hatchery');
 		// Register structure components
 		this.memory = Mem.wrap(this.colony.memory, 'hatchery', getDefaultHatcheryMemory);
-		if (this.colony.layout == 'twoPart') this.colony.destinations.push({pos: this.pos, order: -1});
-		this.spawns = colony.spawns;
-		this.availableSpawns = _.filter(this.spawns, spawn => !spawn.spawning);
-		this.extensions = colony.extensions;
-		this.towers = colony.commandCenter ? _.difference(colony.towers, colony.commandCenter.towers) : colony.towers;
-		if (this.colony.layout == 'bunker') {
-			this.batteries = _.filter(this.room.containers, cont => insideBunkerBounds(cont.pos, this.colony));
-			$.set(this, 'energyStructures', () => this.computeEnergyStructures());
-		} else {
-			// Legacy code for very old base format
-			this.link = this.pos.findClosestByLimitedRange(colony.availableLinks, 2);
-			this.colony.linkNetwork.claimLink(this.link);
-			const battery = this.pos.findClosestByLimitedRange(this.room.containers, 2);
-			this.batteries = battery ? [battery] : [];
-			this.energyStructures = (<(StructureSpawn | StructureExtension)[]>[]).concat(this.spawns, this.extensions);
-		}
+		this.spawns = [];
+
 		this.productionPriorities = [];
 		this.productionQueue = {};
 		this.isOverloaded = false;
@@ -123,13 +107,18 @@ export class Hatchery extends HiveCluster {
 
 	refresh() {
 		this.memory = Mem.wrap(this.colony.memory, 'hatchery', getDefaultHatcheryMemory);
-		$.refreshRoom(this);
-		$.refresh(this, 'spawns', 'extensions', 'energyStructures', 'link', 'towers', 'batteries');
+		this.spawns = this.colony.spawns;
 		this.availableSpawns = _.filter(this.spawns, spawn => !spawn.spawning);
 		this.productionPriorities = [];
 		this.productionQueue = {};
 		this.isOverloaded = false;
 		this._waitTimes = undefined;
+
+		this.towers = this.colony.commandCenter ? _.difference(this.colony.room.towers, this.colony.commandCenter.towers) : this.colony.room.towers;
+		if (this.colony.layout == 'bunker') {
+			this.batteries = _.filter(this.colony.room.containers, cont => insideBunkerBounds(cont.pos, this.colony));
+			this.energyStructures = this.computeEnergyStructures()
+		}
 	}
 
 	spawnMoarOverlords() {
@@ -200,7 +189,7 @@ export class Hatchery extends HiveCluster {
 		if (this.colony.layout == 'bunker') {
 			const positions = _.map(energyStructureOrder, coord => getPosFromBunkerCoord(coord, this.colony));
 			let spawnsAndExtensions: (StructureSpawn | StructureExtension)[] = [];
-			spawnsAndExtensions = spawnsAndExtensions.concat(this.spawns, this.extensions);
+			spawnsAndExtensions = spawnsAndExtensions.concat(this.spawns, this.colony.room.extensions);
 			const energyStructures: (StructureSpawn | StructureExtension)[] = [];
 			for (const pos of positions) {
 				const structure = _.find(pos.lookFor(LOOK_STRUCTURES), s =>
@@ -214,7 +203,7 @@ export class Hatchery extends HiveCluster {
 		} else {
 			// Ugly workaround to [].concat() throwing a temper tantrum
 			let spawnsAndExtensions: (StructureSpawn | StructureExtension)[] = [];
-			spawnsAndExtensions = spawnsAndExtensions.concat(this.spawns, this.extensions);
+			spawnsAndExtensions = spawnsAndExtensions.concat(this.spawns, this.colony.room.extensions);
 			return _.sortBy(spawnsAndExtensions, structure => structure.pos.getRangeTo(this.idlePos));
 		}
 	}
@@ -225,7 +214,7 @@ export class Hatchery extends HiveCluster {
 		if (this.link && this.link.isEmpty) {
 			this.colony.linkNetwork.requestReceive(this.link);
 		}
-		if (this.batteries.length>0) {
+		if (this.batteries.length > 0) {
 			for (const battery of this.batteries) {
 				const threshold = this.colony.stage == ColonyStage.Larva ? 0.75 : 0.5;
 				if (battery.energy < threshold * battery.store.getCapacity()) {
@@ -240,11 +229,11 @@ export class Hatchery extends HiveCluster {
 		// Register energy transport requests (goes on hatchery store group, which can be colony store group)
 		// let refillStructures = this.energyStructures;
 		// if (this.colony.defcon > DEFCON.safe) {
-		// 	for (let hostile of this.room.dangerousHostiles) {
+		// 	for (let hostile of this.colony.room.dangerousHostiles) {
 		// 		// TODO: remove tranport requests if blocked by enemies
 		// 	}
 		// }
-		// if (this.room.defcon > 0) {refillStructures = _.filter()}
+		// if (this.colony.room.defcon > 0) {refillStructures = _.filter()}
 		_.forEach(this.energyStructures, struct => this.transportRequests.requestInput(struct, Priority.Normal));
 
 		// let refillSpawns = _.filter(this.spawns, spawn => spawn.energy < spawn.energyCapacity);
@@ -268,7 +257,7 @@ export class Hatchery extends HiveCluster {
 
 	private spawnCreep(protoCreep: ProtoCreep, options: SpawnRequestOptions = {}): number {
 		// If you can't build it, return this error
-		if (bodyCost(protoCreep.body) > this.room.energyCapacityAvailable) {
+		if (bodyCost(protoCreep.body) > this.colony.room.energyCapacityAvailable) {
 			return ERR_ROOM_ENERGY_CAPACITY_NOT_ENOUGH;
 		}
 		// Get a spawn to use
@@ -322,7 +311,7 @@ export class Hatchery extends HiveCluster {
 	}
 
 	canSpawn(body: BodyPartConstant[]): boolean {
-		return bodyCost(body) <= this.room.energyCapacityAvailable;
+		return bodyCost(body) <= this.colony.room.energyCapacityAvailable;
 	}
 
 	canSpawnZerg(zerg: Zerg): boolean {
@@ -404,7 +393,7 @@ export class Hatchery extends HiveCluster {
 						}
 					}
 				} else {
-					log.debug(`${this.room.print}: cannot spawn creep ${protoCreep.name} with body ` +
+					log.debug(`${this.colony.room.print}: cannot spawn creep ${protoCreep.name} with body ` +
 							  `${JSON.stringify(protoCreep.body)} from overlord ${request.overlord.name}!`);
 				}
 			}
@@ -475,32 +464,32 @@ export class Hatchery extends HiveCluster {
 				spawnProgress.push([timeElapsed, spawn.spawning.needTime]);
 			}
 		});
-		const boxCoords = Visualizer.section(`${this.colony.name} Hatchery`, {x, y, roomName: this.room.name},
+		const boxCoords = Visualizer.section(`${this.colony.name} Hatchery`, {x, y, roomName: this.colony.room.name},
 											 9.5, 3 + spawning.length + .1);
 		const boxX = boxCoords.x;
 		y = boxCoords.y + 0.25;
 
 		// Log energy
-		Visualizer.text('Energy', {x: boxX, y: y, roomName: this.room.name});
-		Visualizer.barGraph([this.room.energyAvailable, this.room.energyCapacityAvailable],
-							{x: boxX + 4, y: y, roomName: this.room.name}, 5);
+		Visualizer.text('Energy', {x: boxX, y: y, roomName: this.colony.room.name});
+		Visualizer.barGraph([this.colony.room.energyAvailable, this.colony.room.energyCapacityAvailable],
+							{x: boxX + 4, y: y, roomName: this.colony.room.name}, 5);
 		y += 1;
 
 		// Log uptime
 		const uptime = this.memory.stats.uptime;
-		Visualizer.text('Uptime', {x: boxX, y: y, roomName: this.room.name});
-		Visualizer.barGraph(uptime, {x: boxX + 4, y: y, roomName: this.room.name}, 5);
+		Visualizer.text('Uptime', {x: boxX, y: y, roomName: this.colony.room.name});
+		Visualizer.barGraph(uptime, {x: boxX + 4, y: y, roomName: this.colony.room.name}, 5);
 		y += 1;
 
 		// Log overload status
 		const overload = this.memory.stats.overload;
-		Visualizer.text('Overload', {x: boxX, y: y, roomName: this.room.name});
-		Visualizer.barGraph(overload, {x: boxX + 4, y: y, roomName: this.room.name}, 5);
+		Visualizer.text('Overload', {x: boxX, y: y, roomName: this.colony.room.name});
+		Visualizer.barGraph(overload, {x: boxX + 4, y: y, roomName: this.colony.room.name}, 5);
 		y += 1;
 
 		for (const i in spawning) {
-			Visualizer.text(spawning[i], {x: boxX, y: y, roomName: this.room.name});
-			Visualizer.barGraph(spawnProgress[i], {x: boxX + 4, y: y, roomName: this.room.name}, 5);
+			Visualizer.text(spawning[i], {x: boxX, y: y, roomName: this.colony.room.name});
+			Visualizer.barGraph(spawnProgress[i], {x: boxX + 4, y: y, roomName: this.colony.room.name}, 5);
 			y += 1;
 		}
 		return {x: x, y: y + .25};

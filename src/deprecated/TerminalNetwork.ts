@@ -378,7 +378,7 @@ export class TerminalNetwork /*implements ITerminalNetwork*/ {
 		}
 		// Equalize current resource type
 		const resource = equalizeResources[this.memory.equalizeIndex] as ResourceConstant | undefined;
-		const terminals = resource == RESOURCE_POWER ? _.filter(this.terminals, t => colonyOf(t).powerSpawn != undefined)
+		const terminals = resource == RESOURCE_POWER ? _.filter(this.terminals, t => colonyOf(t).room.powerSpawn != undefined)
 													 : this.terminals;
 		if (resource) { // resource is undefined if there is nothing to equalize
 			this.equalize(resource, terminals);

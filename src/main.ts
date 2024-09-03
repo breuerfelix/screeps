@@ -36,17 +36,16 @@ function main(): void {
 	Mem.clean();								// Clean memory contents
 
 	// Instantiation operations: build or refresh the game state -------------------------------------------------------
-	if (!Overmind || Overmind.shouldBuild || Game.time >= Overmind.expiration) {
+	if (!global.Overmind || Overmind.shouldBuild || Game.time >= Overmind.expiration) {
 		PHASE = 'build';
 		delete global.Overmind;					// Explicitly delete the old Overmind object
 		Mem.garbageCollect(true);				// Run quick garbage collection
 		global.Overmind = new _Overmind();		// Instantiate the Overmind object
-		Overmind.build();						// Build phase: instantiate all game components
 		LATEST_BUILD_TICK = Game.time;			// Record this tick as having a build reset
 	}
 
 	PHASE = 'refresh';
-	Overmind.refresh();						// Refresh phase: update the Overmind state
+	Overmind.refresh();							// Refresh phase: update the Overmind state
 
 	// Tick loop cycle: initialize and run each component --------------------------------------------------------------
 	PHASE = 'init';
@@ -75,7 +74,7 @@ function onGlobalReset(): void {
 	OvermindConsole.printUpdateMessage();
 	// Update the master ledger of valid checksums
 	// Make a new Overmind object
-	global.Overmind = new _Overmind();
+	//global.Overmind = new _Overmind();
 }
 
 // Decide which loop to export as the script loop
