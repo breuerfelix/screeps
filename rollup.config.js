@@ -38,6 +38,17 @@ export default {
         typescript({tsconfig: "./tsconfig.json"}),
         screeps({config: cfg, dryRun: cfg == null})
     ],
+
+    onwarn: function (warning) {
+        // Skip default export warnings from using obfuscated overmind file in main
+        for (let ignoreWarning of ignoreWarnings) {
+            if (warning.toString().includes(ignoreWarning)) {
+                return;
+            }
+        }
+        // console.warn everything else
+        console.warn(warning.message);
+    },
     
     treeshake: false,
 

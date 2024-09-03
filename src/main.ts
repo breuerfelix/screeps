@@ -43,10 +43,10 @@ function main(): void {
 		global.Overmind = new _Overmind();		// Instantiate the Overmind object
 		Overmind.build();						// Build phase: instantiate all game components
 		LATEST_BUILD_TICK = Game.time;			// Record this tick as having a build reset
+	} else {
+		PHASE = 'refresh';
+		Overmind.refresh();						// Refresh phase: update the Overmind state
 	}
-
-	PHASE = 'refresh';
-	Overmind.refresh();						// Refresh phase: update the Overmind state
 
 	// Tick loop cycle: initialize and run each component --------------------------------------------------------------
 	PHASE = 'init';
