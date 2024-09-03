@@ -1,4 +1,4 @@
-import {Colony} from '../../Colony';
+import {Colony, ColonyStage} from '../../Colony';
 import {log} from '../../console/log';
 import {Roles, Setups} from '../../creepSetups/setups';
 import {isAnyZerg, isDirective, isResource, isRuin, isTombstone} from '../../declarations/typeGuards';
@@ -45,7 +45,7 @@ export class TransportOverlord extends Overlord {
 		}
 
 		let transportPower = 0;
-		const scaling = 2; // this.colony.stage == ColonyStage.Larva ? 1.5 : 2.0; // aggregate round-trip multiplier
+		const scaling = this.colony.stage == ColonyStage.Larva ? 1.5 : 2.0; // aggregate round-trip multiplier
 
 		// Add contributions to transport power from hauling energy from mining sites
 		for (const flagName in this.colony.miningSites) {

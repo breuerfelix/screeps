@@ -1,7 +1,8 @@
 # Overmind Patch Notes
 Changelog format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/) and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html).
 
-## [Unreleased]
+
+## Overmind [0.7.0] - 2024.09.3
 
 ### Added
 - Added structure type guards which help clean up the `RoomPlanner` code substantially.
@@ -16,11 +17,22 @@ Changelog format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0
     - Changed the calculations which determine the number of workers to spawn at early levels to incorporate transporter capacity. This should result in a smoother early game.
     - Number of requested workers varies on energy consumption and takes into account whether workers are primarily building (cost 5 per part) or repairing/upgrading (cost 1 per part).
     - Upgrade site energy requests now account for dQ/dt at low RCL.
+- Deobfuscated `Overmind.ts` and simplified it (removed `IntelManagement` and `Assimilation`)
+- Removed `Assimilation` code since the world war is over and this bot now runs in single mode
+    - Removed `RemoteDebugger`
+    - Removed `Segmenter`
+- Scouts do not spawn if Colony has indestructible walls
+- Removed reinforcement Code
 
 ### Fixed
 - `Zerg.task` validation bugfix.
 - Fixed a bug where `Room.sources` wasn't using the cached values which was costing some CPU. (Thanks @zGeneral for pointing this out!)
-
+- `RoadPlanner` correctly determines obstacles for RCL8 even if in low RCL so roads won't get rebuilt every RCL upgrade
+- Structures that are on a wrong place will not get repaired by towers and creeps
+- `DefenseNPCOverlord` always spawns one defender since sometimes the destination room is not visible
+- `ControllerAttacker` spawns new claimers faster
+- Set `numRepeats` to at least 1 since Creeps without a Body can't be build
+- Reduced tansporter amount in early stages
 
 
 ## Overmind [0.6.0] - 2020.12.9
@@ -170,7 +182,6 @@ This patch fixes a critical bug with the `RoomIntel` module.
 
 ### Fixed
 - Fixed an unprotected access error with `RoomIntel.getSafetyData()`
-
 
 
 ## Overmind [0.5.2] - 2019.2.1

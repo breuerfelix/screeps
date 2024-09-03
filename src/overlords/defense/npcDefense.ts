@@ -55,12 +55,9 @@ export class DefenseNPCOverlord extends Overlord {
 	private handleGuard(guard: CombatZerg): void {
 		if (!guard.inSameRoomAs(this) || guard.pos.isEdge) {
 			// Move into the assigned room if there is a guard flag present
-			console.log("goto room")
-			console.log(this.pos.roomName)
 			guard.goToRoom(this.pos.roomName);
 		} else { // If you're in the assigned room or if there is no assignment, try to attack or heal
 			const attackTarget = this.findAttackTarget(guard);
-			console.log("attack target")
 			if (attackTarget) {
 				this.combatActions(guard, attackTarget);
 			} else {

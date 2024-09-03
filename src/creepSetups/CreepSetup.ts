@@ -2,6 +2,7 @@ import {Colony} from '../Colony';
 import {profile} from '../profiler/decorator';
 import {BoostType, BoostTypeBodyparts} from '../resources/map_resources';
 import {BodyGeneratorReturn} from './CombatCreepSetup';
+import {log} from '../console/log';
 
 export interface BodySetup {
 	pattern: BodyPartConstant[];			// body pattern to be repeated
@@ -116,6 +117,12 @@ export class CreepSetup {
 			const maxPartLimit = Math.floor((MAX_CREEP_SIZE - prefix.length - suffix.length) / patternLength);
 			numRepeats = Math.min(energyLimit, maxPartLimit, this.bodySetup.sizeLimit);
 		}
+		
+		if (numRepeats < 1) {
+			log.debug(`body count is 0 role: ${this.role}`)
+			numRepeats = 1
+		}
+
 		// build the body
 		if (this.bodySetup.proportionalPrefixSuffix) { // add the prefix
 			for (let i = 0; i < numRepeats; i++) {

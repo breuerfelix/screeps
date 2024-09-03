@@ -1,16 +1,16 @@
 {
-  "name": "Overmind",
-  "version": "0.6.0",
+  "name": "overmind",
+  "version": "0.7.0",
   "description": "Overmind Screeps AI",
   "author": "Ben Bartlett",
   "license": "MIT",
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/bencbartlett/Overmind.git"
+    "url": "git+https://github.com/breuerfelix/screeps.git"
   },
-  "homepage": "https://github.com/bencbartlett/Overmind#readme",
+  "homepage": "https://github.com/breuerfelix/screeps#readme",
   "bugs": {
-    "url": "https://github.com/bencbartlett/Overmind/issues"
+    "url": "https://github.com/breuerfelix/screeps/issues"
   },
   "scripts": {
     "build": "tsc -p .",
@@ -28,24 +28,22 @@
     "node": "^20.11"
   },
   "devDependencies": {
-    "@rollup/plugin-commonjs": "^11.0.2",
-    "@rollup/plugin-node-resolve": "^7.1.1",
+    "@rollup/plugin-commonjs": "^11.1.0",
+    "@rollup/plugin-node-resolve": "^7.1.3",
     "@types/lodash": "3.10.2",
-    "@types/node": "^20.11.16",
-    "@types/screeps": "^3.3.7",
-    "javascript-obfuscator": "^4.1.0",
-    "rollup": "^2.6.0",
-    "rollup-plugin-progress": "^1.1.1",
-    "rollup-plugin-screeps": "^1.0.0",
-    "rollup-plugin-typescript2": "^0.27.0",
-    "tslint": "^5.20.0",
+    "@types/node": "^20.16.3",
+    "@types/screeps": "^3.3.8",
+    "rollup": "^2.79.1",
+    "rollup-plugin-progress": "^1.1.2",
+    "rollup-plugin-screeps": "^1.0.1",
+    "rollup-plugin-typescript2": "^0.27.3",
+    "tslint": "^5.20.1",
     "typedoc": "^0.14.2",
     "typescript": "5.3.3"
   },
   "dependencies": {
-    "@tensorflow/tfjs": "^1.2.11",
     "columnify": "1.5.4",
-    "onnxjs": "^0.1.6",
     "source-map": "0.7.3"
-  }
+  },
+  "packageManager": "pnpm@9.6.0+sha1.65cd48c20dd329b7f455088b6dd17d4d5b6d02e3"
 }
