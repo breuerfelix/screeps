@@ -66,6 +66,9 @@ export class VersionMigration {
 		if (!this.memory.versions['053to06X_part5']) {
 			this.migrate_053_06X_part5();
 		}
+		if (!this.memory.versions['060to07X_part1']) {
+			this.migrate_060_07X_part1();
+		}
 	}
 
 	static get memory(): VersionMigratorMemory {
@@ -486,6 +489,15 @@ export class VersionMigration {
 
 		this.memory.versions['053to06X_part5'] = true;
 		log.alert(`Version migration from 0.5.3 -> 0.6.X part 5 completed successfully.`);
+	}
+
+	static migrate_060_07X_part1() {
+		delete Memory["assimilator"]
+		delete Memory["segmenter"]
+		delete Memory["remoteDebugger"]
+
+		this.memory.versions['060to07X_part1'] = true;
+		log.alert(`Version migration from 0.6.0 -> 0.7.X part 1 completed successfully.`);
 	}
 
 }

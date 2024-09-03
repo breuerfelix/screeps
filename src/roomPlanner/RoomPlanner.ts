@@ -108,9 +108,9 @@ export class RoomPlanner {
 	roadPlanner: RoadPlanner;
 
 	static settings = {
-		recheckAfter      : 75,
-		siteCheckFrequency: onPublicServer() ? 75 : 25,	// how often to recheck for structures; multiplied by RCL
-		linkCheckFrequency: 150,
+		recheckAfter      : 50,
+		siteCheckFrequency: onPublicServer() ? 50 : 25,	// how often to recheck for structures; multiplied by RCL
+		linkCheckFrequency: 100,
 		maxSitesPerColony : onPublicServer() ? 10 : 25,
 		maxDismantleCount : 5,
 	};

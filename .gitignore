@@ -13,6 +13,7 @@ screeps.json
 
 # yarn lock file
 /yarn.lock
+/pnpm-lock.yaml
 
 /webpack.config.js
 
