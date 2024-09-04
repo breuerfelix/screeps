@@ -116,7 +116,6 @@ export class Mem {
 	static garbageCollect(quick?: boolean) {
 		if (!global.gc) {
 			// sometimes garbage collection isn't available
-			log.debug(`Manual garbage collection is unavailable on this server.`);
 			return
 		}
 

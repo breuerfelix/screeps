@@ -83,7 +83,6 @@ export default class _Overmind implements IOvermind {
     }
 
 	build() {
-        log.debug('Rebuilding Overmind object!');
         this.cache.build();
         this.registerColonies();
         this.registerDirectives();
