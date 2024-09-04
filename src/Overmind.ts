@@ -1,6 +1,6 @@
 import { Zerg } from 'zerg/Zerg';
 import { GameCache } from './caching/GameCache';
-import { Colony, getAllColonies } from './Colony';
+import { Colony } from './Colony';
 import { log } from './console/log';
 import { DirectiveClearRoom } from './directives/colony/clearRoom';
 import { DirectivePoisonRoom } from './directives/colony/poisonRoom';
@@ -101,8 +101,9 @@ export default class _Overmind implements IOvermind {
         this.terminalNetwork.refresh();
         this.tradeNetwork.refresh();
         this.expansionPlanner.refresh();
-        this.refreshColonies();
-        this.refreshDirectives();
+		_.forEach(this.colonies, c => c.refresh())
+		_.forEach(this.directives, d => d.refresh())
+		this.registerDirectives();
 
         for (const o in this.overlords) {
             this.overlords[o].refresh();
@@ -196,19 +197,13 @@ export default class _Overmind implements IOvermind {
         }
     }
 
-    refreshColonies() {
-        for (const colony in this.colonies) {
-			this.try(() => this.colonies[colony].refresh())
-        }
-    }
-
-    registerDirectives(spawnOverlords: boolean = false) {
+    registerDirectives() {
 		for (const flag in Game.flags) {
             if (this.directives[flag]) {
                 continue;
             }
 
-            const room = Game.flags[flag].memory.C;
+            const room = Game.flags[flag].memory[MEM.COLONY];
             if (room) {
                 if (USE_SCREEPS_PROFILER && !profilerRooms[room]) {
                     continue;
@@ -222,22 +217,10 @@ export default class _Overmind implements IOvermind {
             const directive = DirectiveWrapper(Game.flags[flag])
 			const found = !!this.directives[flag];
 
-            if (directive && found && spawnOverlords) {
-				directive.spawnMoarOverlords();
-			}
-
             if (!directive && !SUPPRESS_INVALID_DIRECTIVE_ALERTS && Game.time % 10 == 0) {
 				log.alert('Flag [' + flag + ' @ ' + Game.flags[flag].pos.print + '] does not match ' + 'a valid directive color code! (Refer to /src/directives/initializer.ts)' + alignedNewline + 'Use removeErrantFlags() to remove flags which do not match a directive.');
             }
         }
-    }
-
-    refreshDirectives() {
-        for (const directive in this.directives) {
-            this.directives[directive].refresh();
-        }
-
-        this.registerDirectives(true);
     }
 
     init() {
