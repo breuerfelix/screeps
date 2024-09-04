@@ -310,7 +310,7 @@ export class Colony {
 		// Register the rest of the colony components; the order in which these are called is important!
 		this.registerOperationalState();
 		this.refreshUtilities();
-		_.forEach(this.hiveClusters, cluster => cluster.refresh())
+		_.forEachRight(this.hiveClusters, cluster => cluster.refresh())
 	}
 
 	get room(): Room {
