@@ -303,7 +303,8 @@ export class Colony {
 		this.refreshRoomObjects();
 		this.registerOperationalState();
 		this.refreshUtilities();
-		this.refreshHiveClusters();
+		// reverse the refresh
+		_.forEachRight(this.hiveClusters, h => h.refresh())
 	}
 
 	// /**
@@ -573,15 +574,6 @@ export class Colony {
 		}
 		// Reverse the hive clusters for correct order for init() and run()
 		this.hiveClusters.reverse();
-	}
-
-	/**
-	 * Refreshes the state of each hive cluster
-	 */
-	private refreshHiveClusters(): void {
-		for (let i = this.hiveClusters.length - 1; i >= 0; i--) {
-			this.hiveClusters[i].refresh();
-		}
 	}
 
 	/**
