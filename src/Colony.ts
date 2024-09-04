@@ -229,9 +229,11 @@ export class Colony {
 				delete this.memory.outposts[roomName];
 			}
 		});
-		// Register colony globally to allow 'W1N1' and 'w1n1' to refer to Overmind.colonies.W1N1
+
+		// Register colony globally to allow 'W1N1' and 'w1n1' to refer to Overmind.colonies.W1N1 or global.w1n1 or just w1n1
 		global[this.name] = this;
 		global[this.name.toLowerCase()] = this;
+
 		// Build the colony
 		this.build(roomName, outposts);
 	}
@@ -279,7 +281,7 @@ export class Colony {
 		this.creeps = Overmind.cache.creepsByColony[this.name] || [];
 		this.creepsByRole = _.groupBy(this.creeps, creep => creep.memory.role);
 		// Register the rest of the colony components; the order in which these are called is important!
-		this.registerRoomObjects_cached();	// Register real colony components
+		this.registerRoomObjects();			// Register real colony components
 		this.registerOperationalState();	// Set the colony operational state
 		this.registerUtilities(); 			// Register logistics utilities, room planners, and layout info
 		this.registerHiveClusters(); 		// Build the hive clusters
@@ -303,84 +305,15 @@ export class Colony {
 		this.refreshRoomObjects();
 		this.registerOperationalState();
 		this.refreshUtilities();
-		// reverse the refresh
+
+		// refresh in reverse order
 		_.forEachRight(this.hiveClusters, h => h.refresh())
-	}
-
-	// /**
-	//  * This is used at low levels to request for resources to be dropped in a common pile before containers
-	//  * and storage are built
-	//  */
-	// private registerEnergyReqeusts(): void {
-	// 	if (this.stage == ColonyStage.Larva) {
-	// 		// If there are no containers, request to drop energy at the location that would be the storagePos
-	// 		// if there are also construction sites present in the hatchery
-	// 		const realStructureSites = _.filter(this.constructionSites,
-	// 											c => c.structureType != STRUCTURE_CONTAINER && c.structureType != STRUCTURE_ROAD);
-	// 		if (realStructureSites.length > 0) {
-	// 			if (this.room.containers.length == 0 && !this.storage) {
-	// 				const dropPos = this.roomPlanner.storagePos;
-	// 				if (dropPos) {
-	//
-	// 				}
-	// 			}
-	// 		} else {
-	// 			if (!this.upgradeSite.battery) {
-	// 				const dropPos = this.upgradeSite.batteryPos;
-	// 				if (dropPos) {
-	//
-	// 				}
-	// 			}
-	// 		}
-	//
-	// 	}
-	// }
-
-	/**
-	 * Registers physical game objects to the colony
-	 */
-	private registerRoomObjects(): void {
-		// Create placeholder arrays for remaining properties to be filled in by the Overmind
-		this.flags = []; // filled in by directives
-		this.destinations = []; // filled in by various hive clusters and directives
-		// Register room objects across colony rooms
-		this.controller = this.room.controller!; // must be controller since colonies are based in owned rooms
-		this.spawns = _.sortBy(_.filter(this.room.spawns, spawn => spawn.my && spawn.isActive()), spawn => spawn.ref);
-		this.extensions = this.room.extensions;
-		this.storage = this.room.storage && this.room.storage.isActive() ? this.room.storage : undefined;
-		this.links = this.room.links;
-		this.availableLinks = _.clone(this.room.links);
-		this.terminal = this.room.terminal && this.room.terminal.isActive() ? this.room.terminal : undefined;
-		this.factory = this.room.factory && this.room.factory.isActive() ? this.room.factory : undefined;
-		this.towers = this.room.towers;
-		this.labs = _.sortBy(_.filter(this.room.labs, lab => lab.my && lab.isActive()),
-							 lab => 50 * lab.pos.y + lab.pos.x); // Labs are sorted in reading order of positions
-		this.powerSpawn = this.room.powerSpawn;
-		this.nuker = this.room.nuker;
-		this.observer = this.room.observer;
-		this.pos = (this.storage || this.terminal || this.spawns[0] || this.controller).pos;
-		// Register physical objects across all rooms in the colony
-		this.sources = _.sortBy(_.flatten(_.map(this.rooms, room => room.sources)),
-								source => source.pos.getMultiRoomRangeTo(this.pos));
-		this.extractors = _(this.rooms)
-			.map(room => room.extractor)
-			.compact()
-			.filter(extractor => (extractor!.my && extractor!.room.my)
-								 || Cartographer.roomType(extractor!.room.name) != ROOMTYPE_CONTROLLER)
-			.sortBy(extractor => extractor!.pos.getMultiRoomRangeTo(this.pos)).value() as StructureExtractor[];
-		this.constructionSites = _.flatten(_.map(this.rooms, room => room.constructionSites));
-		this.tombstones = _.flatten(_.map(this.rooms, room => room.tombstones));
-		this.drops = _.merge(_.map(this.rooms, room => room.drops));
-		this.repairables = _.flatten(_.map(this.rooms, room => room.repairables));
-		this.rechargeables = _.flatten(_.map(this.rooms, room => room.rechargeables));
-		// Register assets
-		this.assets = this.computeAssets();
 	}
 
 	/**
 	 * Version of Colony.registerRoomObjects with additional caching functionality
 	 */
-	private registerRoomObjects_cached(): void {
+	private registerRoomObjects(): void {
 		// Create placeholder arrays for remaining properties to be filled in by the Overmind
 		this.flags = []; // filled in by directives
 		this.destinations = []; // filled in by various hive clusters and directives
@@ -413,8 +346,9 @@ export class Colony {
 				.sortBy(e => e!.pos.getMultiRoomRangeTo(this.pos)).value() as StructureExtractor[]);
 		$.set(this, 'repairables', () => _.flatten(_.map(this.rooms, room => room.repairables)));
 		$.set(this, 'rechargeables', () => _.flatten(_.map(this.rooms, room => room.rechargeables)));
-		$.set(this, 'constructionSites', () => _.flatten(_.map(this.rooms, room => room.constructionSites)), 10);
-		$.set(this, 'tombstones', () => _.flatten(_.map(this.rooms, room => room.tombstones)), 5);
+		$.set(this, 'constructionSites', () => _.flatten(_.map(this.rooms, room => room.constructionSites)));
+		$.set(this, 'tombstones', () => _.flatten(_.map(this.rooms, room => room.tombstones)));
+
 		this.drops = _.merge(_.map(this.rooms, room => room.drops));
 		// Register assets
 		this.assets = this.computeAssets();
@@ -426,9 +360,7 @@ export class Colony {
 	private refreshRoomObjects(): void {
 		$.refresh(this, 'controller', 'extensions', 'links', 'towers', 'powerSpawn', 'nuker', 'observer', 'spawns',
 				  'storage', 'terminal', 'factory', 'labs', 'sources', 'extractors', 'constructionSites', 'repairables',
-				  'rechargeables');
-		$.set(this, 'constructionSites', () => _.flatten(_.map(this.rooms, room => room.constructionSites)), 10);
-		$.set(this, 'tombstones', () => _.flatten(_.map(this.rooms, room => room.tombstones)), 5);
+				  'rechargeables', 'tombstones');
 		this.drops = _.merge(_.map(this.rooms, room => room.drops));
 		// Re-compute assets
 		this.assets = this.computeAssets();
@@ -517,8 +449,6 @@ export class Colony {
 		}
 		// Register road network
 		this.roadLogistics = new RoadLogistics(this);
-		// // "Organism Abathur with you."
-		// this.abathur = new Abathur(this);
 		// Add colony to TerminalNetwork if applicable
 		if (this.terminal) {
 			Overmind.terminalNetwork.addColony(this);
@@ -545,7 +475,6 @@ export class Colony {
 			}
 		}
 		this.roadLogistics.refresh();
-		// this.abathur.refresh();
 	}
 
 	/**
