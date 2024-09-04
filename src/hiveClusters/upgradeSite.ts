@@ -92,28 +92,27 @@ export class UpgradeSite extends HiveCluster {
 
 	private getUpgradePowerNeeded(): number {
 		return $.number(this, 'upgradePowerNeeded', () => {
-			if (this.room.storage) { // Workers perform upgrading until storage is set up
-				const amountOver = Math.max(this.colony.assets.energy - UpgradeSite.settings.energyBuffer, 0);
-				let upgradePower = 1 + Math.floor(amountOver / UpgradeSite.settings.energyPerBodyUnit);
-				if (amountOver > 800000) {
-					upgradePower *= 4; // double upgrade power if we have lots of surplus energy
-				} else if (amountOver > 500000) {
-					upgradePower *= 2;
-				}
-				if (this.controller.level == 8) {
-					if (this.colony.assets.energy < 30000) {
-						upgradePower = 0;
-					} else {
-						upgradePower = Math.min(upgradePower, 15); // don't go above 15 work parts at RCL 8
-					}
-				} else if (this.controller.level >= 6) {
-					// Can set a room to upgrade at an accelerated rate manually
-					upgradePower = this.memory.speedFactor != undefined ? upgradePower * this.memory.speedFactor : upgradePower;
-				}
-				return upgradePower;
-			} else {
-				return 0;
+			// Workers perform upgrading until storage is set up
+			if (!this.room.storage) return 0
+
+			const amountOver = Math.max(this.colony.assets.energy - UpgradeSite.settings.energyBuffer, 0);
+			let upgradePower = 1 + Math.floor(amountOver / UpgradeSite.settings.energyPerBodyUnit);
+			if (amountOver > 800000) {
+				upgradePower *= 4; // double upgrade power if we have lots of surplus energy
+			} else if (amountOver > 500000) {
+				upgradePower *= 2;
 			}
+			if (this.controller.level == 8) {
+				if (this.colony.assets.energy < 30000) {
+					upgradePower = 0;
+				} else {
+					upgradePower = Math.min(upgradePower, 15); // don't go above 15 work parts at RCL 8
+				}
+			} else if (this.controller.level >= 6) {
+				// Can set a room to upgrade at an accelerated rate manually
+				upgradePower = this.memory.speedFactor != undefined ? upgradePower * this.memory.speedFactor : upgradePower;
+			}
+			return upgradePower;
 		});
 	}
 

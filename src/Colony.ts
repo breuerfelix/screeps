@@ -346,10 +346,12 @@ export class Colony {
 				.sortBy(e => e!.pos.getMultiRoomRangeTo(this.pos)).value() as StructureExtractor[]);
 		$.set(this, 'repairables', () => _.flatten(_.map(this.rooms, room => room.repairables)));
 		$.set(this, 'rechargeables', () => _.flatten(_.map(this.rooms, room => room.rechargeables)));
-		$.set(this, 'constructionSites', () => _.flatten(_.map(this.rooms, room => room.constructionSites)));
-		$.set(this, 'tombstones', () => _.flatten(_.map(this.rooms, room => room.tombstones)));
 
+		// these are more volatile															
+		this.constructionSites = _.flatten(_.map(this.rooms, room => room.constructionSites))
+		this.tombstones = _.flatten(_.map(this.rooms, room => room.tombstones))
 		this.drops = _.merge(_.map(this.rooms, room => room.drops));
+
 		// Register assets
 		this.assets = this.computeAssets();
 	}
@@ -359,8 +361,10 @@ export class Colony {
 	 */
 	private refreshRoomObjects(): void {
 		$.refresh(this, 'controller', 'extensions', 'links', 'towers', 'powerSpawn', 'nuker', 'observer', 'spawns',
-				  'storage', 'terminal', 'factory', 'labs', 'sources', 'extractors', 'constructionSites', 'repairables',
-				  'rechargeables', 'tombstones');
+				  'storage', 'terminal', 'factory', 'labs', 'sources', 'extractors', 'repairables', 'rechargeables');
+		// these are more volatile															
+		this.constructionSites = _.flatten(_.map(this.rooms, room => room.constructionSites))
+		this.tombstones = _.flatten(_.map(this.rooms, room => room.tombstones))
 		this.drops = _.merge(_.map(this.rooms, room => room.drops));
 		// Re-compute assets
 		this.assets = this.computeAssets();

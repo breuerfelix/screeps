@@ -185,25 +185,36 @@ export class MiningOverlord extends Overlord {
 	 */
 	private getDismantlePositions(): RoomPosition[] {
 		const dismantleStructures: Structure[] = [];
-		if (this.room) {
-			const targets = _.compact([...this.room.sources, this.room.controller]) as RoomObject[];
-			for (const target of targets) {
-				// Add blocking structures
-				const blockingStructure = this.findBlockingStructure(target);
-				if (blockingStructure) {
-					dismantleStructures.push(blockingStructure);
-				}
-				// Add unwalkable structures with low hits in 2 range
-				for (const pos of target.pos.getPositionsInRange(2, false, false)) {
-					const unwalkableStructure = _.find(pos.lookFor(LOOK_STRUCTURES), s => !s.isWalkable);
-					if (unwalkableStructure && !(<OwnedStructure>unwalkableStructure).my) {
-						dismantleStructures.push(unwalkableStructure);
-					}
+		if (!this.room) {
+			log.error(`MiningOverlord.getDismantleStructures() called with no vision in room ${this.pos.roomName}!`);
+			return []
+		}
+		
+		// cannot calculate blocking position when in different room than target
+		if (this.room.name != this.colony.room.name) {
+			if (this.memory.dismantleNeeded) {
+				log.error(`dismantleNeeded is true but cannot find blockingPos when in outpost room: ${this.pos.roomName}`)
+			}
+
+			return []
+		}
+
+		const targets = _.compact([...this.room.sources, this.room.controller]) as RoomObject[];
+		for (const target of targets) {
+			// Add blocking structures
+			const blockingStructure = this.findBlockingStructure(target);
+			if (blockingStructure) {
+				dismantleStructures.push(blockingStructure);
+			}
+			// Add unwalkable structures with low hits in 2 range
+			for (const pos of target.pos.getPositionsInRange(2, false, false)) {
+				const unwalkableStructure = _.find(pos.lookFor(LOOK_STRUCTURES), s => !s.isWalkable);
+				if (unwalkableStructure && !(<OwnedStructure>unwalkableStructure).my) {
+					dismantleStructures.push(unwalkableStructure);
 				}
 			}
-		} else {
-			log.error(`MiningOverlord.getDismantleStructures() called with no vision in room ${this.pos.roomName}!`);
 		}
+
 		return _.unique(_.map(dismantleStructures, s => s.pos));
 	}
 
