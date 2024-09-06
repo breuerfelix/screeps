@@ -29,12 +29,12 @@ export default {
         progress({clearLine: true}),
         resolve(),
         commonjs({
-                     namedExports: {
-                         'src/Overmind': ['_Overmind'],
-                         'screeps-profiler': ['profiler'],
-                         'columnify': ['columnify']
-                     }
-                 }),
+             namedExports: {
+                 'src/Overmind': ['_Overmind'],
+                 'screeps-profiler': ['profiler'],
+                 'columnify': ['columnify']
+             }
+         }),
         typescript({tsconfig: "./tsconfig.json"}),
         screeps({config: cfg, dryRun: cfg == null})
     ],
@@ -49,7 +49,7 @@ export default {
         // console.warn everything else
         console.warn(warning.message);
     },
-    
+
     treeshake: false,
 
     output: {

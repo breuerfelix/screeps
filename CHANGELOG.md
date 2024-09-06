@@ -3,9 +3,16 @@ Changelog format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0
 
 ## Overmind [0.x.x] - 2024.xx.xx
 
+### Added
+
+### Changed
+
+- Use `es2018` as compile target
+
 ### Fixed
 
 - Outposts no longer try to find blocking positions (path can't be calculated across multiple rooms)
+- `RoadPlanner` checks if there is already a `ConstructionSite` before placing one
 
 ## Overmind [0.7.0] - 2024.09.3
 

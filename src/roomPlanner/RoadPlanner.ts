@@ -343,34 +343,39 @@ export class RoadPlanner {
 			if (!pos.room) {
 				continue; // can't check if there is a road here if you can't see the room
 			}
+			
 			const road = pos.lookForStructure(STRUCTURE_ROAD);
-			if (!road) {
+			// checz if there is already a construction site on that position
+			if (!road && pos.lookFor(LOOK_CONSTRUCTION_SITES).length == 0) {
 				needsRoad = true;
-				if (count > 0) {
-					const ret = pos.createConstructionSite(STRUCTURE_ROAD);
-					if (ret != OK) {
-						if (ret == ERR_NOT_OWNER) {
-							if (Game.time % 50 == 0) {
-								log.warning(`${this.colony.print}: couldn't create road site at ${pos.print}; room ` +
-											`is reserved/owned by hostile forces!`);
-							}
-						} else if (ret == ERR_FULL) {
-							// For some reason, when you place a construction site, the last check they run to see if
-							// you're already at max placed sites searches through EVERY SINGLE GAME OBJECT you have
-							// access to, which is quite expensive! Don't try to make a bunch more of these or you'll
-							// murder your CPU.
-							log.warning(`${this.colony.print}: couldn't create road site at ${pos.print}, too many ` +
-										`construction sites!`);
-							break;
-						} else {
-							log.warning(`${this.colony.print}: couldn't create road site at ${pos.print} (${ret})`);
-						}
-					} else {
-						count--;
+				// needsRoad is true and will queue next run
+				if (count <= 0) break;
+
+				const ret = pos.createConstructionSite(STRUCTURE_ROAD);
+				if (ret == OK) {
+					count--;
+					continue
+				}
+
+				if (ret == ERR_NOT_OWNER) {
+					if (Game.time % 50 == 0) {
+						log.warning(`${this.colony.print}: couldn't create road site at ${pos.print}; room ` +
+									`is reserved/owned by hostile forces!`);
 					}
+				} else if (ret == ERR_FULL) {
+					// For some reason, when you place a construction site, the last check they run to see if
+					// you're already at max placed sites searches through EVERY SINGLE GAME OBJECT you have
+					// access to, which is quite expensive! Don't try to make a bunch more of these or you'll
+					// murder your CPU.
+					log.warning(`${this.colony.print}: couldn't create road site at ${pos.print}, too many ` +
+								`construction sites!`);
+					break;
+				} else {
+					log.warning(`${this.colony.print}: couldn't create road site at ${pos.print} (${ret})`);
 				}
 			}
 		}
+
 		if (needsRoad) {
 			this.roomPlanner.requestRecheck(100);
 		}

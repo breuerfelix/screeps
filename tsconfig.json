@@ -3,7 +3,7 @@
     "allowJs": true,
     "module": "esnext",
     "lib": ["esnext"],
-    "target": "es2017",
+    "target": "es2018",
     "moduleResolution": "Node",
     "newLine": "CRLF",
     "outDir": "tsc-out",
@@ -12,12 +12,14 @@
     "strict": true,
     "strictPropertyInitialization": false,
     "noImplicitThis": false,
+    // TODO fix this
+    "noImplicitReturns": false,
     "skipLibCheck": true,
     "experimentalDecorators": true,
     "allowUnusedLabels": true,
     "allowSyntheticDefaultImports": true,
     "allowUnreachableCode": false,
-    "removeComments": false,
+    "removeComments": true,
     "typeRoots": [
       "./node_modules/@types",
       "./types/"
@@ -37,4 +39,3 @@
     "readme": "none"
   }
 }
-

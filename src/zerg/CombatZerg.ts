@@ -60,6 +60,8 @@ export class CombatZerg extends Zerg {
 				return partner;
 			}
 		}
+
+		return undefined
 	}
 
 	findSwarm(partners: CombatZerg[], maxByRole: { [role: string]: number },
@@ -124,6 +126,8 @@ export class CombatZerg extends Zerg {
 			&& (this.hits < this.hitsMax || this.pos.findInRange(this.room.hostiles, 3).length > 0)) {
 			return this.heal(this);
 		}
+
+		return undefined
 	}
 
 	/**
@@ -159,6 +163,8 @@ export class CombatZerg extends Zerg {
 		if (target) {
 			return this.attack(target);
 		}
+
+		return undefined
 	}
 
 	/**
@@ -177,6 +183,8 @@ export class CombatZerg extends Zerg {
 				return this.rangedAttack(target);
 			}
 		}
+
+		return undefined
 	}
 
 	private kiteIfNecessary() { // Should filter by melee at some point
@@ -186,6 +194,8 @@ export class CombatZerg extends Zerg {
 			this.rangedMassAttack();
 			return this.kite(nearbyHostiles);
 		}
+
+		return undefined
 	}
 
 	/**
@@ -201,6 +211,8 @@ export class CombatZerg extends Zerg {
 				return this.rangedHeal(target);
 			}
 		}
+
+		return undefined
 	}
 
 	/**
@@ -285,6 +297,7 @@ export class CombatZerg extends Zerg {
 			return Movement.combatMove(this, [{pos: target.pos, range: targetRange}], avoid, options);
 		}
 
+		return undefined
 	}
 
 	autoBunkerCombat(roomName: string, verbose = false) {
@@ -314,6 +327,8 @@ export class CombatZerg extends Zerg {
 				requireRamparts: true
 			});
 		}
+
+		return undefined
 	}
 
 	needsToRecover(recoverThreshold  = CombatIntel.minimumDamageTakenMultiplier(this.creep) < 1 ? 0.85 : 0.75,
